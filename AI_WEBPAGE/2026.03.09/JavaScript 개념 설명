@@ -15,3 +15,5 @@ node.js <- 자바 기반 서버 프로그래밍 가능
 
 자바스크립트를 쓰려면, 파일의 확장자는 html이면 됨.
 꼭 쓰고 나면 C언어처럼 ;(세미콜론)으로 마쳐야 함.
+
+doucument.write("Hello"); == printf("Hello");
