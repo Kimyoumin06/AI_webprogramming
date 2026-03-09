@@ -1,1 +1,2 @@
-document.write("Hello World! js_ext");
+document.write("Hello World! Outside");
+document.writeln("Hello2");
