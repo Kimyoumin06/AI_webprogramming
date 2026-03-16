@@ -1,0 +1,19 @@
+document = body 영역 내에서.
+메모리에 하나 생성되면 자동으로 변수 innerHTML이 귀속됨.
+
+test = hello; == test = innerHTML = hello;
+
+document.getElementById("test").innerHTML = hello;
+
+test{
+    innerHTML = hello;
+}
+
+뭔가 선언 되면, 야시장 부스처럼 메모리에 공간을 할당 받음.
+해당 공간에서 어떤 물건을 담을지 지정.
+
+<h1 id ="간식">과자</h1> <- 과자는 innerHTML = "과자"; 가 생략된 느낌. 정확히 생략은 아님. 그냥 이렇게 이해하는게 편함.
+    메모리 == 야시장 공간, 공간 내 모든 정보가 저장된 리스트.
+    h1 id="간식" == 운영할 부스의 종류(이름).
+    innerHTML = 과자 == 부스 내에 보관된 물건.
+
