@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1 id="v1">Hello1</h1>
+    <h1 id="v2">Hello2</h1>
+    <h2 id="v3">Hello3</h2>
+    <script>
+        let x = 100; let y = 200; let z = x+ y;
+        document.getElementById("v1").innerHTML = z;
+        document.getElementById("v2").innerHTML = z;
+        document.getElementById("v2").innerHTML = z + 100;
+        x++;
+        y = y + 1;
+        z = z + 1;
+        z = z + 200;
+
+        document.write(x);
+        document.write(y);
+        document.write(z);
+    </script>
+</body>
+</html>
