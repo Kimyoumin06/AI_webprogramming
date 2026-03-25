@@ -6,6 +6,33 @@
     <title>Document</title>
 </head>
 <body>
-    
+    <h1 id="v1">Hello1</h1>
+    <script>
+        let st1 = "Hello"; let st2 = 'Hello2'; let x = 200;
+        let myCar = {model: "BMZ", color: "red", hp: 100, company: "HD"}
+        document.write(st1 + "<br>");
+        document.write(st1.length + "<br>");
+        document.write(st1.charAt(0) + "<br>");
+        document.write(st1.replace("e", "E") + "<br>");
+        document.write(st1.toUpperCase() + "<br>");
+        document.write(st1.toLowerCase() + "<br>");
+        
+        document.write(x + "<br>");
+        document.write("x = " + x + "<br>");
+        document.write(`x = ${x}` + "<br>");
+        document.write(`st1 = ${st1}` + "<br>");
+        document.write(`st1 = ${st1} : st2 = ${st2}` + "<br>");
+
+        document.write(myCar.color + "<br>");
+        document.write(`myCar.company = ${myCar.company} / myCar.hp = ${myCar.hp}` + "<br>");
+
+        let a = 10; let b = 3;
+        document.write("a/b = " + a/b + "<br>");
+        document.write("a%b = " + a%b + "<br>");
+        a += 250;
+        document.write("a = " + a + "<br>");
+        b = ((20*3)+ b^2)+200+b
+        document.write("b = " + b + "<br>");
+    </script>
 </body>
 </html>
