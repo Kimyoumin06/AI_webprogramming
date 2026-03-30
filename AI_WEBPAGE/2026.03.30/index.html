@@ -6,6 +6,37 @@
     <title>Document</title>
 </head>
 <body>
-    
+    <h1 id="v1">Hello1</h1>
+    <script>
+        let x = 10; let y = 20; let z = 20.0;
+        document.write((x > y) + "<br>");
+        document.write((x < y) + "<br>");
+        document.write((x == y) + "<br>");
+        document.write((x != y) + "<br>");
+        document.write((z == y) + "<br>");
+        document.write((z != y) + "<br>");
+        document.write((z === y) + "<br>");
+        document.write((z !== y) + "<br>");
+    </script>
+
+    <h1 id="v2">Hello2</h1>
+    <script>
+        document.write(( (x > y) && (z == y)) + "<br>")
+        document.write(( (x < y) || (z == y)) + "<br>")
+        document.write(( (!(x > y)) && (z == y)) + "<br>")
+        
+        max_value = (x > y) ? x : y;
+        document.write(max_value + "<br>");
+        max_value = (x < y) ? x : y;
+        document.write(max_value + "<br>");
+
+        document.write((2+3)*4);
+    </script>
+
+    <h1>그냥 쓴 거</h1>
+    <script>
+        let a = "GoHome"; let b = "NoHome"; let MyThink = b;
+        document.write((MyThink == a ? "Ok, you go home" : "No, you don't go home"));
+    </script>
 </body>
 </html>
