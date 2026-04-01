@@ -4,9 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <script>
+        function sub(){
+            let name = prompt("이름을 입력하시오 : ");
+            document.getElementById("test1").innerHTML = name;
+            
+        }
+    </script>
 </head>
 <body>
-    <h1 id="v1">Hello1</h1>
+    <h3 id="v1">Hello1</h3>
     <script>
         let x, y; let input1, input2;
         input1 = prompt("정수를 입력하세요 : ", "정수 입력");
@@ -18,5 +25,15 @@
         document.write("y: " + y + "<br>");
         document.write("sum: " + (x + y) + "<br>");
     </script>
+
+    <h3 id="v2">Hello2</h3>
+    <script>
+        let agree;
+        agree = confirm("동의합니까?");
+        document.write(agree + "<br>");
+    </script>
+
+    <h1 id="test1">Hello</h1>
+    <button onclick="sub()">클릭하세요</button>
 </body>
 </html>
