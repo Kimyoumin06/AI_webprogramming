@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+        function sub(){
+            e = document.getElementById("test1");
+            e.style.color = "red";
+            e.style.background = "yellow";
+        }
+
+        function calc(){
+            let x = document.getElementById("x").value;
+            let y = document.getElementById("y").value;
+            let sum;
+            sum = parseInt(x) + parseInt(y);
+            document.getElementById("sum").value = sum;
+        }
+    </script>
+</head>
+<body>
+    <h1 id="test1">Hello</h1>
+    <button onclick="sub()">클릭하세요</button>
+    
+    <script>
+        let x = 100; let y = 200;
+        console.log(x, y);
+    </script>
+
+    <h3>덧셈 계산기</h3>
+    <form name="myform" action="..." method="POST">
+        첫번째 정수:    <input id="x" /><br />
+        두번째 정수:    <input id="y" /><br />
+        합계:    <input id="sum" /><br />
+        <input type="button" value="계산" onclick="calc();">
+    </form>
+</body>
+</html>
