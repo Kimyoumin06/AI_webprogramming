@@ -14,9 +14,16 @@
         function calc(){
             let x = document.getElementById("x").value;
             let y = document.getElementById("y").value;
-            let sum;
+            let sum; let minuse; let times; let division;
+
             sum = parseInt(x) + parseInt(y);
+            minuse = parseInt(x) - parseInt(y);
+            times = parseInt(x) * parseInt(y);
+            division = parseInt(x) / parseInt(y);
             document.getElementById("sum").value = sum;
+            document.getElementById("minuse").value = minuse;
+            document.getElementById("times").value = times;
+            document.getElementById("division").value = division;
         }
     </script>
 </head>
@@ -29,11 +36,14 @@
         console.log(x, y);
     </script>
 
-    <h3>덧셈 계산기</h3>
+    <h3>계산기</h3>
     <form name="myform" action="..." method="POST">
         첫번째 정수:    <input id="x" /><br />
         두번째 정수:    <input id="y" /><br />
         합계:    <input id="sum" /><br />
+        빼기:    <input id="minuse" /><br />
+        곱셈:    <input id="times" /><br />
+        나눗셈:    <input id="division" /><br />
         <input type="button" value="계산" onclick="calc();">
     </form>
 </body>

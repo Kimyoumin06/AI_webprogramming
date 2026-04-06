@@ -1,1 +1,6 @@
 속성 = 변수.
+
+let x = document.getElementById("x").value;
+<input id="x" /><br />
+input을 통해 입력을 받으면, id="x"인 걸로 찾아서, 최종적으로 x에 저장 됨.
+input으로 받은 값은 value 라는 변수 형태로 저장 됨.
