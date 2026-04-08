@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1 id="test1"></h1>
+    <h1 id="test2"></h1>
+    <script>
+        //let time = new Date().getHours();
+        let time = 20; let msg;
+        document.getElementById("test1").innerHTML = "time :" + time;
+
+        if(time < 12){
+            msg = "Good Morning";
+        }
+        else if (time < 18){
+            msg = "Good Afternoon";
+        }
+        else{
+            msg = "Good Evening";
+        }
+        document.getElementById("test2").innerHTML = msg;
+    </script>
+
+    <br>
+
+    <h2 id="test"></h2>
+    <script>
+        //let day = new Date().getDay();
+        let day = 0;
+        switch(day){
+            case 0:
+            case 6:
+                day = "주말";
+                break;
+                
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+                day = "주중";
+                break;
+            default:
+                day = "디폴트";
+                break;
+        }
+        document.getElementById("test").innerHTML = "오늘은 " + day + " 입니다.";
+    </script>
+
+    <script>
+        let SwitchtoIf = 8;
+        if((SwitchtoIf >= 1) && (SwitchtoIf <= 5)){
+            SwitchtoIf = "주중";
+        }
+        else if(SwitchtoIf == 0 || SwitchtoIf == 6){
+            SwitchtoIf = "주말";
+        }
+        else{
+            SwitchtoIf = "디폴트";
+        }
+        document.write("스위치 -> 이프 : " + SwitchtoIf);
+    </script>
+
+<br>
+
+    <script>
+        let i = 0;
+        while(i<10){
+            document.write("while : " + i + "<br />");
+            i++;
+        }
+    </script>
+
+    <script>
+        for(x=0; x<10; x++){
+            document.write("for : " + x + "<br />");
+        }
+    </script>
+</body>
+</html>
