@@ -6,6 +6,37 @@
     <title>Document</title>
 </head>
 <body>
+
+    <script>
+        let i = 1;
+        let v1 = 0, v2 = 0;
+        let v3 = 0, v4 = 0;
+        while(i <= 3){
+            i += 1;
+            v1 = v1+2;
+            v2 = v2 + v1 + 3;
+        }
+        v3 = i + v1 + v2;
+        v4 = v1 + v2+ v3;
+        document.write("V4 : " + v4 + "(while)<br>");
+    </script>
+
+<br>
+
+    <script>
+        v1 = 0; v2 = 0;
+        v3 = 0; v4 = 0;
+        for(i=1; i<=3; i+=1){
+            v1 = v1+2;
+            v2 = v2 + v1 + 3;
+        }
+        v3 = i + v1 + v2;
+        v4 = v1 + v2+ v3;
+        document.write("V4 : " + v4 + "(for)<br>");
+    </script>
+
+<br>
+
     <table border="3">
         <tr>
             <td>섭씨온도</td>
