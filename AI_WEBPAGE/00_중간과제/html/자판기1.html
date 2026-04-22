@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>무인카페 자판기</title>
+  <title>병원 무인카페 키오스크</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Serif+Display&display=swap');
 
@@ -22,6 +22,7 @@
       --danger: #d4645a;
       --success: #6aad8e;
       --info: #6a9bc4;
+      --warning: #e0a84a;
     }
 
     body {
@@ -34,51 +35,277 @@
       overflow-x: hidden;
     }
 
+    /* ── AUTH SCREEN ── */
+    #authScreen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding: 24px;
+    }
+
+    .auth-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .auth-logo span {
+      font-size: 11px;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: var(--text2);
+      display: block;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 28px;
+      width: min(420px, 96vw);
+      margin-top: 28px;
+    }
+
+    .auth-card h2 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .auth-card .auth-sub {
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .auth-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .auth-method-btn {
+      background: var(--surface2);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      color: var(--text);
+    }
+
+    .auth-method-btn:hover,
+    .auth-method-btn.selected {
+      border-color: var(--accent);
+      background: rgba(200,169,110,0.08);
+    }
+
+    .auth-method-btn .method-icon { font-size: 24px; display: block; margin-bottom: 6px; }
+    .auth-method-btn .method-label { font-size: 11px; color: var(--text2); }
+
+    .auth-id-input-wrap { margin-bottom: 16px; }
+    .auth-id-input-wrap label {
+      font-size: 11px;
+      color: var(--text3);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .auth-id-input-wrap input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .auth-id-input-wrap input:focus { border-color: var(--accent); }
+
+    /* Demo patient list */
+    .demo-patients {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+    }
+
+    .demo-patients .demo-label {
+      font-size: 10px;
+      color: var(--text3);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .demo-patient-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .demo-patient-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 10px;
+      background: var(--surface);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .demo-patient-item:hover { background: rgba(200,169,110,0.1); }
+
+    .demo-patient-item .dp-name { font-size: 13px; }
+    .demo-patient-item .dp-id   { font-size: 11px; color: var(--text3); }
+    .demo-patient-item .dp-cond {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .cond-normal   { background: rgba(106,173,142,0.2); color: var(--success); }
+    .cond-diabetes { background: rgba(212,100,90,0.2);  color: var(--danger);  }
+    .cond-heart    { background: rgba(224,168,74,0.2);  color: var(--warning); }
+    .cond-general  { background: rgba(106,155,196,0.2); color: var(--info);    }
+
+    .btn-auth {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      color: #1a1a1a;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-auth:hover { background: var(--accent2); }
+
+    /* ── MAIN APP (hidden until auth) ── */
+    #appScreen { display: none; flex-direction: column; min-height: 100vh; }
+    #appScreen.visible { display: flex; }
+
     /* ── HEADER ── */
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 18px 24px;
+      padding: 14px 24px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
       z-index: 100;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
     }
 
     .brand {
       font-family: 'DM Serif Display', serif;
-      font-size: 22px;
+      font-size: 20px;
       color: var(--accent);
       letter-spacing: 0.06em;
     }
 
-    .brand span { font-size: 11px; font-family: 'Noto Sans KR', sans-serif; color: var(--text2); display: block; letter-spacing: 0.2em; margin-top: 2px; text-transform: uppercase; }
+    .brand span {
+      font-size: 10px;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: var(--text2);
+      display: block;
+      letter-spacing: 0.2em;
+      margin-top: 1px;
+      text-transform: uppercase;
+    }
 
-    .card-info {
+    /* Patient badge in header */
+    .patient-badge {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 7px 12px;
+    }
+
+    .patient-badge .pb-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      background: rgba(200,169,110,0.15);
+      border: 1px solid var(--accent);
+      flex-shrink: 0;
+    }
+
+    .patient-badge .pb-name  { font-size: 13px; font-weight: 600; line-height: 1.2; }
+    .patient-badge .pb-cond  { font-size: 10px; color: var(--text3); }
+
+    .patient-cond-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .card-badge {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 8px 14px;
+      padding: 7px 12px;
       text-align: right;
     }
 
-    .card-badge .label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; }
-    .card-badge .amount { font-size: 17px; font-weight: 700; color: var(--accent); margin-top: 1px; }
+    .card-badge .label  { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; }
+    .card-badge .amount { font-size: 16px; font-weight: 700; color: var(--accent); margin-top: 1px; }
 
     .btn-charge {
       background: transparent;
       border: 1px solid var(--accent);
       color: var(--accent);
       border-radius: 8px;
-      padding: 8px 14px;
+      padding: 8px 13px;
       font-size: 12px;
       font-family: inherit;
       cursor: pointer;
@@ -88,11 +315,48 @@
 
     .btn-charge:hover { background: var(--accent); color: #1a1a1a; }
 
+    .btn-logout {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text3);
+      border-radius: 8px;
+      padding: 8px 13px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ── HEALTH NOTICE BANNER ── */
+    .health-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 24px;
+      font-size: 12px;
+      line-height: 1.5;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .health-banner.show { display: flex; }
+    .health-banner .hb-icon { font-size: 18px; flex-shrink: 0; }
+    .health-banner .hb-text { flex: 1; color: var(--text2); }
+    .health-banner .hb-text strong { font-weight: 600; }
+
+    .hb-diabetes { background: rgba(212,100,90,0.08); border-bottom-color: rgba(212,100,90,0.3); }
+    .hb-diabetes .hb-icon-wrap { color: var(--danger); }
+
+    .hb-heart    { background: rgba(224,168,74,0.08); border-bottom-color: rgba(224,168,74,0.3); }
+    .hb-heart .hb-icon-wrap { color: var(--warning); }
+
     /* ── CATEGORY TABS ── */
     .category-bar {
       display: flex;
       gap: 8px;
-      padding: 16px 24px;
+      padding: 14px 24px;
       background: var(--surface);
       overflow-x: auto;
       scrollbar-width: none;
@@ -125,7 +389,6 @@
     .main {
       display: flex;
       flex: 1;
-      gap: 0;
     }
 
     /* ── MENU GRID ── */
@@ -153,27 +416,30 @@
     }
 
     .menu-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-    .menu-card.sold-out { opacity: 0.45; pointer-events: none; }
 
-    .menu-card .icon {
-      font-size: 32px;
-      margin-bottom: 10px;
-      display: block;
+    /* sold-out: can't click */
+    .menu-card.sold-out,
+    .menu-card.restricted {
+      opacity: 0.42;
+      pointer-events: none;
     }
 
+    .menu-card .icon { font-size: 32px; margin-bottom: 10px; display: block; }
     .menu-card .name { font-size: 14px; font-weight: 500; line-height: 1.3; margin-bottom: 4px; }
     .menu-card .sub  { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
     .menu-card .price { font-size: 15px; font-weight: 700; color: var(--accent); }
 
-    .sold-out-tag {
+    .status-tag {
       position: absolute;
       top: 10px; right: 10px;
-      background: var(--danger);
-      color: #fff;
       font-size: 10px;
       border-radius: 6px;
       padding: 2px 7px;
+      font-weight: 600;
     }
+
+    .tag-soldout    { background: var(--danger);  color: #fff; }
+    .tag-restricted { background: var(--warning); color: #1a1a1a; }
 
     /* ── ORDER PANEL ── */
     .order-panel {
@@ -226,7 +492,6 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; } }
 
     .order-item .item-icon { font-size: 20px; flex-shrink: 0; }
-
     .order-item .item-info { flex: 1; }
     .order-item .item-name { font-size: 13px; font-weight: 500; }
     .order-item .item-price { font-size: 12px; color: var(--text2); margin-top: 2px; }
@@ -251,7 +516,6 @@
     }
 
     .qty-btn:hover { background: var(--border); }
-
     .qty-count { font-size: 13px; font-weight: 500; min-width: 18px; text-align: center; }
 
     /* ── SUMMARY ── */
@@ -378,7 +642,7 @@
       transition: opacity 0.2s;
     }
 
-    .modal-btn.cancel { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+    .modal-btn.cancel  { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
     .modal-btn.confirm { background: var(--accent); color: #1a1a1a; }
     .modal-btn:hover { opacity: 0.85; }
 
@@ -386,7 +650,13 @@
     .receipt { text-align: center; }
     .receipt .receipt-icon { font-size: 42px; margin-bottom: 12px; }
     .receipt h3 { font-size: 20px; margin-bottom: 4px; }
-    .receipt .receipt-items { text-align: left; margin: 20px 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); padding: 14px 0; }
+    .receipt .receipt-items {
+      text-align: left;
+      margin: 20px 0;
+      border-top: 1px dashed var(--border);
+      border-bottom: 1px dashed var(--border);
+      padding: 14px 0;
+    }
     .receipt .r-item { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
     .receipt .r-item .r-name { color: var(--text2); }
     .receipt .r-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; margin-top: 14px; }
@@ -395,6 +665,7 @@
 
     /* ── OPTION MODAL ── */
     .option-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 20px; }
+
     .opt-chip {
       background: var(--surface2);
       border: 1px solid var(--border);
@@ -408,9 +679,27 @@
     }
 
     .opt-chip.selected { background: rgba(200,169,110,0.15); border-color: var(--accent); color: var(--accent); }
+    .opt-chip.disabled-opt { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 
     .opt-section { margin-bottom: 16px; }
-    .opt-label { font-size: 11px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+    .opt-label   { font-size: 11px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+
+    /* health warning inside option modal */
+    .health-warn-box {
+      display: none;
+      align-items: flex-start;
+      gap: 8px;
+      background: rgba(224,168,74,0.1);
+      border: 1px solid rgba(224,168,74,0.3);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: var(--warning);
+      line-height: 1.5;
+    }
+
+    .health-warn-box.show { display: flex; }
 
     /* ── TOAST ── */
     .toast {
@@ -429,12 +718,14 @@
       white-space: nowrap;
     }
 
-    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.show  { transform: translateX(-50%) translateY(0); }
     .toast.error { background: var(--danger); }
+    .toast.warn  { background: var(--warning); color: #1a1a1a; }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 700px) {
       .order-panel { display: none; }
+
       .fab-cart {
         display: flex;
         position: fixed;
@@ -453,6 +744,7 @@
         box-shadow: 0 4px 20px rgba(200,169,110,0.3);
         z-index: 150;
       }
+
       .fab-cart .fab-count {
         background: #1a1a1a;
         color: var(--accent);
@@ -461,7 +753,9 @@
         display: flex; align-items: center; justify-content: center;
         font-size: 12px;
       }
+
       .menu-grid { grid-template-columns: repeat(2, 1fr); }
+
       .mobile-order-panel {
         display: flex !important;
         position: fixed;
@@ -475,7 +769,9 @@
         transform: translateY(100%);
         transition: transform 0.3s ease;
       }
+
       .mobile-order-panel.open { transform: translateY(0); }
+      .patient-badge .pb-cond { display: none; }
     }
 
     @media (min-width: 701px) {
@@ -486,58 +782,135 @@
 </head>
 <body>
 
-<!-- HEADER -->
-<header>
-  <div class="brand">
+<!-- ══════════════════════════════════
+     AUTH SCREEN
+══════════════════════════════════ -->
+<div id="authScreen">
+  <div class="auth-logo">
     Brew &amp; Bean
-    <span>Unmanned Café Kiosk</span>
+    <span>Hospital Café Kiosk</span>
   </div>
-  <div class="card-info">
-    <div class="card-badge">
-      <div class="label">카드 잔액</div>
-      <div class="amount" id="cardBalance">₩50,000</div>
+
+  <div class="auth-card">
+    <h2>🏥 환자 인증</h2>
+    <p class="auth-sub">
+      본 키오스크는 병원 환자 전용입니다.<br>
+      인증 수단을 선택하거나 환자 ID를 직접 입력하세요.
+    </p>
+
+    <!-- 인증 수단 선택 -->
+    <div class="auth-methods">
+      <button class="auth-method-btn selected" id="methodCard" onclick="selectMethod('card')">
+        <span class="method-icon">💳</span>
+        <span class="method-label">ID 카드</span>
+      </button>
+      <button class="auth-method-btn" id="methodBand" onclick="selectMethod('band')">
+        <span class="method-icon">⌚</span>
+        <span class="method-label">손목 밴드</span>
+      </button>
+      <button class="auth-method-btn" id="methodApp" onclick="selectMethod('app')">
+        <span class="method-icon">📱</span>
+        <span class="method-label">앱 바코드</span>
+      </button>
     </div>
-    <button class="btn-charge" onclick="openChargeModal()">+ 충전</button>
-  </div>
-</header>
 
-<!-- CATEGORY BAR -->
-<div class="category-bar">
-  <button class="cat-btn active" onclick="filterCategory('all', this)">전체</button>
-  <button class="cat-btn" onclick="filterCategory('coffee', this)">☕ 커피</button>
-  <button class="cat-btn" onclick="filterCategory('nonCoffee', this)">🍵 논커피</button>
-  <button class="cat-btn" onclick="filterCategory('smoothie', this)">🥤 스무디</button>
-  <button class="cat-btn" onclick="filterCategory('tea', this)">🫖 차</button>
-  <button class="cat-btn" onclick="filterCategory('ade', this)">🍊 에이드</button>
-</div>
+    <!-- 환자 ID 직접 입력 -->
+    <div class="auth-id-input-wrap">
+      <label>환자 ID 직접 입력</label>
+      <input type="text" id="patientIdInput" placeholder="예: P001" maxlength="10"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter') doAuth()">
+    </div>
 
-<!-- MAIN -->
-<div class="main">
-  <div class="menu-section">
-    <div class="menu-grid" id="menuGrid"></div>
-  </div>
-  <div class="order-panel" id="orderPanelDesktop">
-    <h2>주문 내역</h2>
-    <div class="order-items" id="orderItemsDesktop"></div>
-    <div class="order-summary" id="orderSummaryDesktop"></div>
+    <!-- 데모용 환자 목록 -->
+    <div class="demo-patients">
+      <div class="demo-label">데모 — 아래 환자를 클릭하여 빠른 인증</div>
+      <div class="demo-patient-list" id="demoPatientList"></div>
+    </div>
+
+    <button class="btn-auth" onclick="doAuth()">🔐 인증하기</button>
   </div>
 </div>
 
-<!-- FAB (mobile) -->
-<button class="fab-cart" id="fabCart" onclick="openMobilePanel()">
-  🛒 장바구니
-  <span class="fab-count" id="fabCount">0</span>
-</button>
+<!-- ══════════════════════════════════
+     APP SCREEN
+══════════════════════════════════ -->
+<div id="appScreen">
 
-<!-- MOBILE ORDER PANEL -->
-<div class="mobile-order-panel" id="mobileOrderPanel">
-  <div style="padding:14px 20px 0; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border);">
-    <h2 style="border:none; padding:0; font-size:14px;">주문 내역</h2>
-    <button onclick="closeMobilePanel()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;">✕</button>
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="brand">
+        Brew &amp; Bean
+        <span>Hospital Café Kiosk</span>
+      </div>
+      <div class="patient-badge" id="patientBadge">
+        <div class="pb-avatar" id="pbAvatar">👤</div>
+        <div>
+          <div class="pb-name" id="pbName">환자명</div>
+          <div class="pb-cond" id="pbCond">환자 상태</div>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="card-badge">
+        <div class="label">카드 잔액</div>
+        <div class="amount" id="cardBalance">₩50,000</div>
+      </div>
+      <button class="btn-charge" onclick="openChargeModal()">+ 충전</button>
+      <button class="btn-logout" onclick="logout()">로그아웃</button>
+    </div>
+  </header>
+
+  <!-- HEALTH NOTICE BANNER -->
+  <div class="health-banner" id="healthBanner">
+    <span class="hb-icon" id="hbIcon"></span>
+    <div class="hb-text" id="hbText"></div>
   </div>
-  <div class="order-items" id="orderItemsMobile"></div>
-  <div class="order-summary" id="orderSummaryMobile"></div>
-</div>
+
+  <!-- CATEGORY BAR -->
+  <div class="category-bar">
+    <button class="cat-btn active" onclick="filterCategory('all', this)">전체</button>
+    <button class="cat-btn" onclick="filterCategory('coffee', this)">☕ 커피</button>
+    <button class="cat-btn" onclick="filterCategory('nonCoffee', this)">🍵 논커피</button>
+    <button class="cat-btn" onclick="filterCategory('smoothie', this)">🥤 스무디</button>
+    <button class="cat-btn" onclick="filterCategory('tea', this)">🫖 차</button>
+    <button class="cat-btn" onclick="filterCategory('ade', this)">🍊 에이드</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="menu-section">
+      <div class="menu-grid" id="menuGrid"></div>
+    </div>
+    <div class="order-panel" id="orderPanelDesktop">
+      <h2>주문 내역</h2>
+      <div class="order-items"   id="orderItemsDesktop"></div>
+      <div class="order-summary" id="orderSummaryDesktop"></div>
+    </div>
+  </div>
+
+  <!-- FAB (mobile) -->
+  <button class="fab-cart" id="fabCart" onclick="openMobilePanel()">
+    🛒 장바구니
+    <span class="fab-count" id="fabCount">0</span>
+  </button>
+
+  <!-- MOBILE ORDER PANEL -->
+  <div class="mobile-order-panel" id="mobileOrderPanel">
+    <div style="padding:14px 20px 0; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border);">
+      <h2 style="border:none; padding:0; font-size:14px;">주문 내역</h2>
+      <button onclick="closeMobilePanel()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div class="order-items"   id="orderItemsMobile"></div>
+    <div class="order-summary" id="orderSummaryMobile"></div>
+  </div>
+
+</div><!-- /#appScreen -->
+
+<!-- ══════════════════════════════════
+     MODALS
+══════════════════════════════════ -->
 
 <!-- CHARGE MODAL -->
 <div class="modal-backdrop" id="chargeModal">
@@ -556,7 +929,7 @@
         style="width:100%;padding:11px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-family:inherit;">
     </div>
     <div class="modal-btns">
-      <button class="modal-btn cancel" onclick="closeModal('chargeModal')">취소</button>
+      <button class="modal-btn cancel"  onclick="closeModal('chargeModal')">취소</button>
       <button class="modal-btn confirm" onclick="doCharge()">충전하기</button>
     </div>
   </div>
@@ -567,6 +940,13 @@
   <div class="modal">
     <h3 id="optModalName"></h3>
     <p class="modal-sub" id="optModalPrice"></p>
+
+    <!-- 건강 경고 (특정 메뉴 선택 시) -->
+    <div class="health-warn-box" id="healthWarnBox">
+      <span>⚠️</span>
+      <span id="healthWarnText"></span>
+    </div>
+
     <div class="opt-section">
       <div class="opt-label">온도</div>
       <div class="option-grid" id="optTemp"></div>
@@ -580,7 +960,7 @@
       <div class="option-grid" id="optSugar"></div>
     </div>
     <div class="modal-btns">
-      <button class="modal-btn cancel" onclick="closeModal('optionModal')">취소</button>
+      <button class="modal-btn cancel"  onclick="closeModal('optionModal')">취소</button>
       <button class="modal-btn confirm" onclick="addToCart()">담기</button>
     </div>
   </div>
@@ -593,7 +973,7 @@
     <p class="modal-sub">카드로 결제하시겠습니까?</p>
     <div id="payDetails" style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:18px;font-size:13px;color:var(--text2);line-height:1.9;"></div>
     <div class="modal-btns">
-      <button class="modal-btn cancel" onclick="closeModal('payModal')">취소</button>
+      <button class="modal-btn cancel"  onclick="closeModal('payModal')">취소</button>
       <button class="modal-btn confirm" onclick="doPayment()">💳 결제</button>
     </div>
   </div>
@@ -617,65 +997,234 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- ══════════════════════════════════
+     SCRIPT
+══════════════════════════════════ -->
 <script>
-// ── DATA ──
+// ────────────────────────────────────────────────────────────
+// 1. 환자 데이터
+//    condition: 'normal' | 'diabetes' | 'heart' | 'general'
+//    - normal   : 모든 메뉴 이용 가능 (당도 제한 없음)
+//    - diabetes : 카페인 주의 + 당도 '보통' 이하만 선택 가능
+//                 (고당도 칩 비활성화)
+//    - heart    : 카페인 함유 음료 주문 불가 (coffee 카테고리 제한)
+//    - general  : 모든 메뉴 이용 가능 (당도 제한 없음)
+// ────────────────────────────────────────────────────────────
+const PATIENTS = [
+  { id: 'P001', name: '김민준', condition: 'normal',   avatar: '🧑', room: '301호' },
+  { id: 'P002', name: '이서연', condition: 'diabetes', avatar: '👩', room: '214호' },
+  { id: 'P003', name: '박도현', condition: 'heart',    avatar: '🧓', room: '508호' },
+  { id: 'P004', name: '최유나', condition: 'general',  avatar: '👧', room: '120호' },
+];
+
+// 조건 표시 설정
+const COND_CONFIG = {
+  normal:   { label: '일반',     cls: 'cond-normal',   bannerCls: '',             bannerIcon: '',   bannerMsg: '' },
+  diabetes: {
+    label: '당뇨 주의',
+    cls:   'cond-diabetes',
+    bannerCls:  'hb-diabetes',
+    bannerIcon: '🩺',
+    bannerMsg:  '<strong>당뇨 환자 안내:</strong> 고카페인 음료는 주의가 필요하며, 당도 옵션은 <strong>보통</strong> 이하로 제한됩니다.'
+  },
+  heart: {
+    label: '심장 질환 주의',
+    cls:   'cond-heart',
+    bannerCls:  'hb-heart',
+    bannerIcon: '💊',
+    bannerMsg:  '<strong>심장 질환 환자 안내:</strong> 카페인 함유 음료(커피 카테고리)는 주문이 제한됩니다.'
+  },
+  general:  { label: '일반',     cls: 'cond-general',  bannerCls: '',             bannerIcon: '',   bannerMsg: '' },
+};
+
+// 당도 단계 순서 (높을수록 고당도)
+const SUGAR_OPTS  = ['단맛 없음', '적게', '보통', '달게'];
+const SUGAR_LIMIT = { diabetes: '보통' };  // 이 값 '이하'만 허용
+
+// ────────────────────────────────────────────────────────────
+// 2. 메뉴 데이터
+// ────────────────────────────────────────────────────────────
 const MENU = [
   // Coffee
-  { id:1, cat:'coffee',    icon:'☕', name:'아메리카노',      sub:'Americano',        price:3500,  tempOpt:true,  sizeOpt:true,  soldOut:false },
-  { id:2, cat:'coffee',    icon:'☕', name:'카페 라떼',        sub:'Café Latte',       price:4000,  tempOpt:true,  sizeOpt:true,  soldOut:false },
-  { id:3, cat:'coffee',    icon:'☕', name:'카푸치노',         sub:'Cappuccino',       price:4200,  tempOpt:true,  sizeOpt:false, soldOut:false },
-  { id:4, cat:'coffee',    icon:'☕', name:'바닐라 라떼',      sub:'Vanilla Latte',    price:4500,  tempOpt:true,  sizeOpt:true,  soldOut:false },
-  { id:5, cat:'coffee',    icon:'☕', name:'돌체 라떼',        sub:'Dolce Latte',      price:4800,  tempOpt:true,  sizeOpt:false, soldOut:false },
-  { id:6, cat:'coffee',    icon:'☕', name:'에스프레소',       sub:'Espresso',         price:3000,  tempOpt:false, sizeOpt:false, soldOut:false },
+  { id:1,  cat:'coffee',    icon:'☕', name:'아메리카노',      sub:'Americano',        price:3500, tempOpt:true,  sizeOpt:true,  soldOut:false, caffeine:true  },
+  { id:2,  cat:'coffee',    icon:'☕', name:'카페 라떼',       sub:'Café Latte',       price:4000, tempOpt:true,  sizeOpt:true,  soldOut:false, caffeine:true  },
+  { id:3,  cat:'coffee',    icon:'☕', name:'카푸치노',        sub:'Cappuccino',       price:4200, tempOpt:true,  sizeOpt:false, soldOut:false, caffeine:true  },
+  { id:4,  cat:'coffee',    icon:'☕', name:'바닐라 라떼',     sub:'Vanilla Latte',    price:4500, tempOpt:true,  sizeOpt:true,  soldOut:false, caffeine:true  },
+  { id:5,  cat:'coffee',    icon:'☕', name:'돌체 라떼',       sub:'Dolce Latte',      price:4800, tempOpt:true,  sizeOpt:false, soldOut:false, caffeine:true  },
+  { id:6,  cat:'coffee',    icon:'☕', name:'에스프레소',      sub:'Espresso',         price:3000, tempOpt:false, sizeOpt:false, soldOut:false, caffeine:true  },
   // Non-coffee
-  { id:7, cat:'nonCoffee', icon:'🍫', name:'초코 라떼',        sub:'Choco Latte',      price:4200,  tempOpt:true,  sizeOpt:true,  soldOut:false },
-  { id:8, cat:'nonCoffee', icon:'🍵', name:'말차 라떼',        sub:'Matcha Latte',     price:4500,  tempOpt:true,  sizeOpt:true,  soldOut:false },
-  { id:9, cat:'nonCoffee', icon:'🥛', name:'딸기 라떼',        sub:'Strawberry Latte', price:4800,  tempOpt:true,  sizeOpt:false, soldOut:true  },
+  { id:7,  cat:'nonCoffee', icon:'🍫', name:'초코 라떼',       sub:'Choco Latte',      price:4200, tempOpt:true,  sizeOpt:true,  soldOut:false, caffeine:false },
+  { id:8,  cat:'nonCoffee', icon:'🍵', name:'말차 라떼',       sub:'Matcha Latte',     price:4500, tempOpt:true,  sizeOpt:true,  soldOut:false, caffeine:false },
+  { id:9,  cat:'nonCoffee', icon:'🥛', name:'딸기 라떼',       sub:'Strawberry Latte', price:4800, tempOpt:true,  sizeOpt:false, soldOut:true,  caffeine:false },
   // Smoothie
-  { id:10,cat:'smoothie',  icon:'🥤', name:'딸기 스무디',      sub:'Strawberry',       price:5500,  tempOpt:false, sizeOpt:true,  soldOut:false },
-  { id:11,cat:'smoothie',  icon:'🥤', name:'망고 스무디',      sub:'Mango',            price:5500,  tempOpt:false, sizeOpt:true,  soldOut:false },
-  { id:12,cat:'smoothie',  icon:'🥤', name:'블루베리 스무디',  sub:'Blueberry',        price:5800,  tempOpt:false, sizeOpt:false, soldOut:false },
+  { id:10, cat:'smoothie',  icon:'🥤', name:'딸기 스무디',     sub:'Strawberry',       price:5500, tempOpt:false, sizeOpt:true,  soldOut:false, caffeine:false },
+  { id:11, cat:'smoothie',  icon:'🥤', name:'망고 스무디',     sub:'Mango',            price:5500, tempOpt:false, sizeOpt:true,  soldOut:false, caffeine:false },
+  { id:12, cat:'smoothie',  icon:'🥤', name:'블루베리 스무디', sub:'Blueberry',        price:5800, tempOpt:false, sizeOpt:false, soldOut:false, caffeine:false },
   // Tea
-  { id:13,cat:'tea',       icon:'🫖', name:'얼그레이 티',      sub:'Earl Grey',        price:3500,  tempOpt:true,  sizeOpt:false, soldOut:false },
-  { id:14,cat:'tea',       icon:'🫖', name:'캐모마일 티',      sub:'Chamomile',        price:3500,  tempOpt:true,  sizeOpt:false, soldOut:false },
-  { id:15,cat:'tea',       icon:'🫖', name:'히비스커스 티',    sub:'Hibiscus',         price:3800,  tempOpt:true,  sizeOpt:false, soldOut:false },
+  { id:13, cat:'tea',       icon:'🫖', name:'얼그레이 티',     sub:'Earl Grey',        price:3500, tempOpt:true,  sizeOpt:false, soldOut:false, caffeine:false },
+  { id:14, cat:'tea',       icon:'🫖', name:'캐모마일 티',     sub:'Chamomile',        price:3500, tempOpt:true,  sizeOpt:false, soldOut:false, caffeine:false },
+  { id:15, cat:'tea',       icon:'🫖', name:'히비스커스 티',   sub:'Hibiscus',         price:3800, tempOpt:true,  sizeOpt:false, soldOut:false, caffeine:false },
   // Ade
-  { id:16,cat:'ade',       icon:'🍊', name:'자몽 에이드',      sub:'Grapefruit Ade',   price:4500,  tempOpt:false, sizeOpt:true,  soldOut:false },
-  { id:17,cat:'ade',       icon:'🍋', name:'레몬 에이드',      sub:'Lemon Ade',        price:4200,  tempOpt:false, sizeOpt:true,  soldOut:false },
-  { id:18,cat:'ade',       icon:'🍓', name:'딸기 에이드',      sub:'Strawberry Ade',   price:4500,  tempOpt:false, sizeOpt:true,  soldOut:false },
+  { id:16, cat:'ade',       icon:'🍊', name:'자몽 에이드',     sub:'Grapefruit Ade',   price:4500, tempOpt:false, sizeOpt:true,  soldOut:false, caffeine:false },
+  { id:17, cat:'ade',       icon:'🍋', name:'레몬 에이드',     sub:'Lemon Ade',        price:4200, tempOpt:false, sizeOpt:true,  soldOut:false, caffeine:false },
+  { id:18, cat:'ade',       icon:'🍓', name:'딸기 에이드',     sub:'Strawberry Ade',   price:4500, tempOpt:false, sizeOpt:true,  soldOut:false, caffeine:false },
 ];
 
 const SIZE_PRICE = { Regular: 0, Large: 500, ExtraLarge: 1000 };
 const SIZE_LABEL = { Regular: 'Regular', Large: 'Large (+₩500)', ExtraLarge: 'XL (+₩1,000)' };
 const TEMP_OPTS  = ['ICE', 'HOT'];
-const SUGAR_OPTS = ['단맛 없음', '적게', '보통', '달게'];
 
-let cardBalance = 50000;
-let cart = [];  // { menuItem, temp, size, sugar, qty, unitPrice }
-let currentItem = null;
-let selTemp = '', selSize = '', selSugar = '';
+// ────────────────────────────────────────────────────────────
+// 3. 상태 변수
+// ────────────────────────────────────────────────────────────
+let currentPatient = null;   // 인증된 환자 객체
+let cardBalance    = 50000;
+let cart           = [];
+let currentItem    = null;
+let selTemp        = '';
+let selSize        = '';
+let selSugar       = '';
 let currentCategory = 'all';
-let chargeAmount = 0;
+let chargeAmount   = 0;
+let selectedMethod = 'card';
 
-// ── RENDER ──
+// ────────────────────────────────────────────────────────────
+// 4. 환자 조건 헬퍼
+// ────────────────────────────────────────────────────────────
+function isRestricted(item) {
+  if (!currentPatient) return false;
+  const cond = currentPatient.condition;
+  // 심장 질환: 카페인 음료 전체 제한
+  if (cond === 'heart' && item.caffeine) return true;
+  return false;
+}
+
+function getAllowedSugars() {
+  if (!currentPatient) return SUGAR_OPTS;
+  const limit = SUGAR_LIMIT[currentPatient.condition];
+  if (!limit) return SUGAR_OPTS;
+  const idx = SUGAR_OPTS.indexOf(limit);
+  return SUGAR_OPTS.slice(0, idx + 1);
+}
+
+// ────────────────────────────────────────────────────────────
+// 5. 인증 화면 초기화
+// ────────────────────────────────────────────────────────────
+function initAuthScreen() {
+  const list = document.getElementById('demoPatientList');
+  list.innerHTML = PATIENTS.map(p => {
+    const cfg = COND_CONFIG[p.condition];
+    return `
+      <div class="demo-patient-item" onclick="quickAuth('${p.id}')">
+        <span class="dp-name">${p.avatar} ${p.name} <span style="color:var(--text3);font-size:11px;">(${p.room})</span></span>
+        <span class="dp-id">${p.id}</span>
+        <span class="dp-cond ${cfg.cls}">${cfg.label}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectMethod(m) {
+  selectedMethod = m;
+  ['card','band','app'].forEach(k => {
+    document.getElementById('method' + k.charAt(0).toUpperCase() + k.slice(1))
+      .classList.toggle('selected', k === m);
+  });
+}
+
+function quickAuth(id) {
+  document.getElementById('patientIdInput').value = id;
+  doAuth();
+}
+
+function doAuth() {
+  const inputId = document.getElementById('patientIdInput').value.trim().toUpperCase();
+  if (!inputId) { showToast('환자 ID를 입력하세요.', 'error'); return; }
+
+  const patient = PATIENTS.find(p => p.id === inputId);
+  if (!patient) {
+    showToast('등록되지 않은 환자 ID입니다.', 'error');
+    return;
+  }
+
+  currentPatient = patient;
+  cardBalance    = 50000; // 인증 시 잔액 초기화 (데모)
+  cart           = [];
+
+  // 헤더 환자 정보 업데이트
+  const cfg = COND_CONFIG[patient.condition];
+  document.getElementById('pbAvatar').textContent = patient.avatar;
+  document.getElementById('pbName').textContent   = patient.name;
+  document.getElementById('pbCond').innerHTML =
+    `${patient.room} · <span class="patient-cond-tag ${cfg.cls}">${cfg.label}</span>`;
+
+  // 건강 배너
+  const banner = document.getElementById('healthBanner');
+  if (cfg.bannerMsg) {
+    banner.className = 'health-banner show ' + cfg.bannerCls;
+    document.getElementById('hbIcon').textContent = cfg.bannerIcon;
+    document.getElementById('hbText').innerHTML   = cfg.bannerMsg;
+  } else {
+    banner.className = 'health-banner';
+  }
+
+  // 화면 전환
+  document.getElementById('authScreen').style.display = 'none';
+  const app = document.getElementById('appScreen');
+  app.classList.add('visible');
+
+  // 카테고리 초기화
+  currentCategory = 'all';
+  document.querySelectorAll('.cat-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+
+  renderAll();
+  showToast(`${patient.name}님, 환영합니다! 😊`);
+}
+
+function logout() {
+  currentPatient = null;
+  cart = [];
+  document.getElementById('patientIdInput').value = '';
+  document.getElementById('appScreen').classList.remove('visible');
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('healthBanner').className = 'health-banner';
+}
+
+// ────────────────────────────────────────────────────────────
+// 6. 렌더링
+// ────────────────────────────────────────────────────────────
 function fmt(n) { return '₩' + n.toLocaleString('ko-KR'); }
 
 function renderMenu() {
-  const grid = document.getElementById('menuGrid');
+  const grid  = document.getElementById('menuGrid');
   const items = currentCategory === 'all' ? MENU : MENU.filter(m => m.cat === currentCategory);
-  grid.innerHTML = items.map(item => `
-    <div class="menu-card${item.soldOut ? ' sold-out' : ''}" onclick="${item.soldOut ? '' : `openOptionModal(${item.id})`}">
-      ${item.soldOut ? '<span class="sold-out-tag">품절</span>' : ''}
-      <span class="icon">${item.icon}</span>
-      <div class="name">${item.name}</div>
-      <div class="sub">${item.sub}</div>
-      <div class="price">${fmt(item.price)}</div>
-    </div>
-  `).join('');
+
+  grid.innerHTML = items.map(item => {
+    const restricted = isRestricted(item);
+    let cls = '';
+    let tag = '';
+    if (item.soldOut) {
+      cls = ' sold-out';
+      tag = `<span class="status-tag tag-soldout">품절</span>`;
+    } else if (restricted) {
+      cls = ' restricted';
+      tag = `<span class="status-tag tag-restricted">제한</span>`;
+    }
+    const click = (!item.soldOut && !restricted) ? `onclick="openOptionModal(${item.id})"` : '';
+    return `
+      <div class="menu-card${cls}" ${click}>
+        ${tag}
+        <span class="icon">${item.icon}</span>
+        <div class="name">${item.name}</div>
+        <div class="sub">${item.sub}</div>
+        <div class="price">${fmt(item.price)}</div>
+      </div>
+    `;
+  }).join('');
 }
 
 function renderOrder(suffix) {
-  const itemsEl   = document.getElementById('orderItems' + suffix);
+  const itemsEl   = document.getElementById('orderItems'   + suffix);
   const summaryEl = document.getElementById('orderSummary' + suffix);
 
   if (cart.length === 0) {
@@ -691,18 +1240,18 @@ function renderOrder(suffix) {
         <span class="item-icon">${c.menuItem.icon}</span>
         <div class="item-info">
           <div class="item-name">${c.menuItem.name}</div>
-          <div class="item-price">${fmt(c.unitPrice)} ${label ? `<span style="color:var(--text3);font-size:10px;">${label}</span>` : ''}</div>
+          <div class="item-price">${fmt(c.unitPrice)}${label ? ` <span style="color:var(--text3);font-size:10px;">${label}</span>` : ''}</div>
         </div>
         <div class="qty-controls">
           <button class="qty-btn" onclick="changeQty(${i}, -1)">−</button>
           <span class="qty-count">${c.qty}</span>
-          <button class="qty-btn" onclick="changeQty(${i}, 1)">+</button>
+          <button class="qty-btn" onclick="changeQty(${i},  1)">+</button>
         </div>
       </div>
     `;
   }).join('');
 
-  const total = getTotal();
+  const total     = getTotal();
   const itemCount = cart.reduce((s, c) => s + c.qty, 0);
 
   summaryEl.innerHTML = `
@@ -723,7 +1272,9 @@ function renderAll() {
   document.getElementById('cardBalance').textContent = fmt(cardBalance);
 }
 
-// ── CATEGORY ──
+// ────────────────────────────────────────────────────────────
+// 7. 카테고리 필터
+// ────────────────────────────────────────────────────────────
 function filterCategory(cat, btn) {
   currentCategory = cat;
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
@@ -731,17 +1282,32 @@ function filterCategory(cat, btn) {
   renderMenu();
 }
 
-// ── OPTION MODAL ──
+// ────────────────────────────────────────────────────────────
+// 8. 옵션 모달
+// ────────────────────────────────────────────────────────────
 function openOptionModal(id) {
   currentItem = MENU.find(m => m.id === id);
-  selTemp  = currentItem.tempOpt  ? 'ICE' : '';
-  selSize  = currentItem.sizeOpt  ? 'Regular' : '';
-  selSugar = '보통';
+  selTemp  = currentItem.tempOpt ? 'ICE' : '';
+  selSize  = currentItem.sizeOpt ? 'Regular' : '';
+
+  // 당뇨 환자: 허용 당도 중 첫 번째를 기본값으로
+  const allowed = getAllowedSugars();
+  selSugar = allowed.includes('보통') ? '보통' : allowed[allowed.length - 1];
 
   document.getElementById('optModalName').textContent  = currentItem.name;
   document.getElementById('optModalPrice').textContent = fmt(currentItem.price) + '부터';
 
-  // Temp
+  // 건강 경고 박스 (당뇨 + 카페인 메뉴)
+  const warnBox  = document.getElementById('healthWarnBox');
+  const warnText = document.getElementById('healthWarnText');
+  if (currentPatient && currentPatient.condition === 'diabetes' && currentItem.caffeine) {
+    warnText.textContent = '당뇨 환자에게 카페인은 혈당 변동을 유발할 수 있습니다. 섭취량에 주의하세요.';
+    warnBox.classList.add('show');
+  } else {
+    warnBox.classList.remove('show');
+  }
+
+  // 온도 옵션
   const tempEl = document.getElementById('optTemp');
   if (currentItem.tempOpt) {
     tempEl.innerHTML = TEMP_OPTS.map(t =>
@@ -752,7 +1318,7 @@ function openOptionModal(id) {
     tempEl.closest('.opt-section').style.display = 'none';
   }
 
-  // Size
+  // 사이즈 옵션
   const sizeEl = document.getElementById('optSize');
   if (currentItem.sizeOpt) {
     sizeEl.innerHTML = Object.keys(SIZE_PRICE).map(s =>
@@ -763,11 +1329,17 @@ function openOptionModal(id) {
     document.getElementById('sizeSection').style.display = 'none';
   }
 
-  // Sugar
+  // 당도 옵션 — 환자 조건에 따라 비활성화
   const sugarEl = document.getElementById('optSugar');
-  sugarEl.innerHTML = SUGAR_OPTS.map(s =>
-    `<button class="opt-chip${s === selSugar ? ' selected' : ''}" onclick="pickOpt('sugar','${s}',this)">${s}</button>`
-  ).join('');
+  const limit   = SUGAR_LIMIT[currentPatient ? currentPatient.condition : ''] || null;
+  const limitIdx = limit ? SUGAR_OPTS.indexOf(limit) : SUGAR_OPTS.length - 1;
+
+  sugarEl.innerHTML = SUGAR_OPTS.map((s, i) => {
+    const isDisabled = (i > limitIdx);
+    const isSel      = (s === selSugar);
+    return `<button class="opt-chip${isSel ? ' selected' : ''}${isDisabled ? ' disabled-opt' : ''}"
+      ${isDisabled ? '' : `onclick="pickOpt('sugar','${s}',this)"`}>${s}${isDisabled ? ' 🚫' : ''}</button>`;
+  }).join('');
 
   openModal('optionModal');
 }
@@ -776,7 +1348,8 @@ function pickOpt(type, val, btn) {
   if (type === 'temp')  selTemp  = val;
   if (type === 'size')  selSize  = val;
   if (type === 'sugar') selSugar = val;
-  btn.closest('.option-grid').querySelectorAll('.opt-chip').forEach(b => b.classList.remove('selected'));
+  btn.closest('.option-grid').querySelectorAll('.opt-chip:not(.disabled-opt)')
+    .forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
 }
 
@@ -785,16 +1358,24 @@ function addToCart() {
   const sizeExtra = currentItem.sizeOpt ? (SIZE_PRICE[selSize] || 0) : 0;
   const unitPrice = currentItem.price + sizeExtra;
 
-  // Check if identical option already in cart
   const existing = cart.find(c =>
     c.menuItem.id === currentItem.id &&
-    c.temp === selTemp && c.size === selSize && c.sugar === selSugar
+    c.temp  === selTemp  &&
+    c.size  === selSize  &&
+    c.sugar === selSugar
   );
 
   if (existing) {
     existing.qty++;
   } else {
-    cart.push({ menuItem: currentItem, temp: selTemp, size: selSize || 'Regular', sugar: selSugar, qty: 1, unitPrice });
+    cart.push({
+      menuItem: currentItem,
+      temp: selTemp,
+      size: selSize || 'Regular',
+      sugar: selSugar,
+      qty: 1,
+      unitPrice
+    });
   }
 
   closeModal('optionModal');
@@ -802,7 +1383,9 @@ function addToCart() {
   renderAll();
 }
 
-// ── CART OPS ──
+// ────────────────────────────────────────────────────────────
+// 9. 장바구니 조작
+// ────────────────────────────────────────────────────────────
 function changeQty(idx, delta) {
   cart[idx].qty += delta;
   if (cart[idx].qty <= 0) cart.splice(idx, 1);
@@ -818,37 +1401,40 @@ function getTotal() {
   return cart.reduce((s, c) => s + c.unitPrice * c.qty, 0);
 }
 
-// ── PAYMENT ──
+// ────────────────────────────────────────────────────────────
+// 10. 결제
+// ────────────────────────────────────────────────────────────
 function openPayModal() {
-  const total = getTotal();
+  const total   = getTotal();
   const details = cart.map(c => {
     const label = [c.temp, c.size !== 'Regular' ? c.size : '', c.sugar !== '보통' ? c.sugar : ''].filter(Boolean).join(', ');
     return `${c.menuItem.name}${label ? ` (${label})` : ''} × ${c.qty} = ${fmt(c.unitPrice * c.qty)}`;
   }).join('<br>');
 
   document.getElementById('payDetails').innerHTML =
-    details + `<br><br><strong style="color:var(--text)">합계: ${fmt(total)}</strong><br><span style="color:var(--text3)">카드 잔액: ${fmt(cardBalance)} → ${fmt(cardBalance - total)}</span>`;
+    details +
+    `<br><br><strong style="color:var(--text)">합계: ${fmt(total)}</strong>
+     <br><span style="color:var(--text3)">카드 잔액: ${fmt(cardBalance)} → ${fmt(cardBalance - total)}</span>`;
 
   openModal('payModal');
 }
 
 function doPayment() {
   const total = getTotal();
-  if (total > cardBalance) { showToast('잔액이 부족합니다!', true); return; }
+  if (total > cardBalance) { showToast('잔액이 부족합니다!', 'error'); return; }
 
   cardBalance -= total;
 
-  // Build receipt
   const items = cart.map(c => ({
-    name: c.menuItem.name + (c.temp ? ` (${c.temp})` : ''),
-    qty: c.qty,
+    name:  c.menuItem.name + (c.temp ? ` (${c.temp})` : ''),
+    qty:   c.qty,
     price: c.unitPrice * c.qty
   }));
 
   document.getElementById('receiptItems').innerHTML = items.map(it =>
     `<div class="r-item"><span class="r-name">${it.name} ×${it.qty}</span><span>${fmt(it.price)}</span></div>`
   ).join('');
-  document.getElementById('receiptTotal').textContent = fmt(total);
+  document.getElementById('receiptTotal').textContent   = fmt(total);
   document.getElementById('receiptBalance').textContent = `잔여 잔액: ${fmt(cardBalance)}`;
 
   cart = [];
@@ -857,7 +1443,9 @@ function doPayment() {
   renderAll();
 }
 
-// ── CHARGE ──
+// ────────────────────────────────────────────────────────────
+// 11. 충전
+// ────────────────────────────────────────────────────────────
 function openChargeModal() {
   chargeAmount = 0;
   document.getElementById('customCharge').value = '';
@@ -872,37 +1460,42 @@ function selectCharge(amount) {
 function doCharge() {
   const custom = parseInt(document.getElementById('customCharge').value) || 0;
   const amount = custom > 0 ? custom : chargeAmount;
-  if (amount < 1000) { showToast('최소 1,000원 이상 충전하세요.', true); return; }
+  if (amount < 1000) { showToast('최소 1,000원 이상 충전하세요.', 'error'); return; }
   cardBalance += amount;
   closeModal('chargeModal');
   showToast(`${fmt(amount)} 충전 완료!`);
   renderAll();
 }
 
-// ── MOBILE PANEL ──
-function openMobilePanel()  { document.getElementById('mobileOrderPanel').classList.add('open'); }
-function closeMobilePanel() { document.getElementById('mobileOrderPanel').classList.remove('open'); }
-
-// ── MODAL UTILS ──
+// ────────────────────────────────────────────────────────────
+// 12. 모달 / 패널 유틸
+// ────────────────────────────────────────────────────────────
 function openModal(id)  { document.getElementById(id).classList.add('show'); }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
-// Close on backdrop click
 document.querySelectorAll('.modal-backdrop').forEach(bd => {
   bd.addEventListener('click', e => { if (e.target === bd) bd.classList.remove('show'); });
 });
 
-// ── TOAST ──
-function showToast(msg, isError) {
+function openMobilePanel()  { document.getElementById('mobileOrderPanel').classList.add('open'); }
+function closeMobilePanel() { document.getElementById('mobileOrderPanel').classList.remove('open'); }
+
+// ────────────────────────────────────────────────────────────
+// 13. 토스트
+// ────────────────────────────────────────────────────────────
+function showToast(msg, type) {
+  // type: 'error' | 'warn' | undefined(success)
   const el = document.getElementById('toast');
   el.textContent = msg;
-  el.className = 'toast' + (isError ? ' error' : '');
+  el.className = 'toast' + (type ? ' ' + type : '');
   el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2200);
+  setTimeout(() => el.classList.remove('show'), 2400);
 }
 
-// ── INIT ──
-renderAll();
+// ────────────────────────────────────────────────────────────
+// 14. 초기화
+// ────────────────────────────────────────────────────────────
+initAuthScreen();
 </script>
 </body>
 </html>
