@@ -40,9 +40,30 @@
     <br>
 
     <script>
+        for(i=1;i<=6;i++){
+            document.write("<h" + i + ">" + "Hello" + i + "</h" + i + ">");
+        }
+    </script>
+
+    <br>
+
+    <table border="3">
+        <tr>
+            <td>번호</td>
+            <td>측정값</td>
+            <td>측정값2</td>
+        </tr>
+        <script>
+            for(let v = 1; v <= 10; v++){
+                document.write("<tr><td>" + v + "</td><td>" + (100 + v) + "</td><td>" + (200 + v) + "</td></tr>");
+            }
+        </script>
+    </table>
+
+    <script>
         /*
         let msg = "";
-        for(i=0; i<10; i++){
+        for(i=1; i<10; i++){
             if(i==3) continue;
             msg += i + "<br>";
         }
