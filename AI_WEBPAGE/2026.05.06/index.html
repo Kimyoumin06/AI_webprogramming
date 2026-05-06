@@ -15,6 +15,14 @@
             this.brake = function(){this.speed -= 10;}
             this.accel = function(){this.speed += 10;}
         }
+
+        myCar1 = new Car("520a", 20, "red");
+        myCar2 = new Car("521a", 30, "green");
+
+        document.write("<h1>myCar1</h1>");
+        document.write("Model : " + myCar1.model + " Speed : " + myCar1.speed + " Color : " + myCar1.color + "<br>");
+        document.write("<h1>myCar2</h1>");
+        document.write("Model : " + myCar2.model + " Speed : " + myCar2.speed + " Color : " + myCar2.color + "<br>");
     </script>
 </body>
 </html>
