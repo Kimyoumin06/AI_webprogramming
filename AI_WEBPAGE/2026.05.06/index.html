@@ -19,10 +19,23 @@
         myCar1 = new Car("520a", 20, "red");
         myCar2 = new Car("521a", 30, "green");
 
+        //11-1 ~
+
         document.write("<h1>myCar1</h1>");
         document.write("Model : " + myCar1.model + " Speed : " + myCar1.speed + " Color : " + myCar1.color + "<br>");
+        
+        myCar1.accel()
+        document.write("Speed(accel) : " + myCar1.speed + "<br>");
+        myCar1.brake()
+        document.write("Speed(brake) : " + myCar1.speed + "<br>");
+        
         document.write("<h1>myCar2</h1>");
         document.write("Model : " + myCar2.model + " Speed : " + myCar2.speed + " Color : " + myCar2.color + "<br>");
+        
+        myCar2.accel();
+        document.write("Speed(accel) : " + myCar2.speed + "<br>");
+        myCar2.brake();
+        document.write("Speed(brake) : " + myCar2.speed + "<br>");
     </script>
 </body>
 </html>
