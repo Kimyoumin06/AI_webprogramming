@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>간결한 병원 무인카페 키오스크</title>
+  
+  <style>
+    /* 모든 태그(*는 전체를 의미)의 테두리와 안쪽 여백을 포함하여 크기를 계산하도록 설정하고, 기본 바깥 여백(margin)과 안쪽 여백(padding)을 0으로 초기화합니다. */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    /* 웹 페이지 전체에서 공통으로 사용할 색상 변수(테마 컬러)들을 미리 등록해두는 저장소입니다. */
+    :root {
+      --bg-dark: #1a1a1a; /* 가장 어두운 배경색 */
+      --surface: #242424; /* 중간 크기의 상자나 카드 배경색 */
+      --surface-light: #2e2e2e; /* 조금 더 밝은 상자 배경색 */
+      --border: #3a3a3a; /* 상자들의 테두리 선 색상 */
+      --accent: #c8a96e; /* 포인트로 강조할 골드(금색) 색상 */
+      --text-main: #f0ece4; /* 기본 밝은 글자 색상 */
+      --text-muted: #a09890; /* 중요하지 않은 흐릿한 글자 색상 */
+      --danger: #d4645a; /* 위험이나 금지를 나타내는 붉은색 */
+      --warning: #e0a84a; /* 경고나 주의를 나타내는 노란색 */
+    }
+
+    /* 웹 페이지의 실제 몸통 부분의 배경색, 글자색, 글꼴을 설정하고, 화면 전체 높이를 차지하도록 배치합니다. */
+    body {
+      font-family: sans-serif; /* 고딕체 계열의 기본 글꼴 사용 */
+      background: var(--bg-dark); /* 미리 정해둔 가장 어두운 배경색 적용 */
+      color: var(--text-main); /* 미리 정해둔 밝은 글자색 적용 */
+      min-height: 100vh; /* 세로 높이를 화면 전체 높이만큼 꽉 채움 */
+      display: flex; /* 내부 요소들을 정렬하기 위해 플렉스 박스 레이아웃 사용 */
+      flex-direction: column; /* 내부 요소들을 위에서 아래로 세로로 정렬 */
+    }
+
+    /* 맨 처음 나타나는 환자 로그인/인증 화면의 스타일입니다. 화면 전체를 덮도록 만듭니다. */
+    #authScreen {
+      position: fixed; /* 화면에 자리를 고정시킴 */
+      inset: 0; /* 위, 아래, 왼쪽, 오른쪽 여백을 모두 0으로 만들어 화면 전체를 채움 */
+      background: var(--bg-dark); /* 배경색을 어두운색으로 설정 */
+      z-index: 500; /* 다른 화면들보다 무조건 맨 위에 보이도록 층 위치를 높임 */
+      display: flex; /* 내부 요소들을 정렬하기 위해 플렉스 박스 사용 */
+      flex-direction: column; /* 요소들을 세로로 정렬 */
+      align-items: center; /* 가로 방향의 가운데로 정렬 */
+      justify-content: center; /* 세로 방향의 가운데로 정렬 */
+      padding: 20px; /* 사방에 20픽셀만큼 안쪽 여백을 줌 */
+    }
+
+    /* 인증 화면 중앙에 있는 네모난 하얀색 계열 상자(카드)의 디자인입니다. */
+    .auth-card {
+      background: var(--surface); /* 상자 배경색 적용 */
+      border: 1px solid var(--border); /* 상자 테두리 선 생성 */
+      border-radius: 16px; /* 상자의 네 모서리를 둥글게 깎음 */
+      padding: 30px; /* 상자 내부 여백을 30픽셀로 설정 */
+      width: 100%; /* 너비를 100%로 하되 */
+      max-width: 400px; /* 아무리 화면이 커져도 최대 400픽셀까지만 늘어나게 제한 */
+      text-align: center; /* 상자 안의 글자들을 가운데로 정렬 */
+    }
+
+    /* 카드, 밴드, 앱 선택 버튼 3개가 가로로 나란히 배치되는 구역의 설정입니다. */
+    .auth-methods {
+      display: grid; /* 바둑판 배열 형태의 레이아웃 사용 */
+      grid-template-columns: repeat(3, 1fr); /* 같은 크기(1비율)의 칸 3개를 가로로 생성 */
+      gap: 10px; /* 버튼과 버튼 사이의 간격을 10픽셀로 띄움 */
+      margin: 20px 0; /* 위아래로 20픽셀만큼 바깥 여백을 만들어 다른 요소와 띄움 */
+    }
+
+    /* 카드, 밴드, 앱 각각의 버튼들의 모양입니다. */
+    .auth-method-btn {
+      background: var(--surface-light); /* 버튼 배경색 */
+      border: 2px solid var(--border); /* 2픽셀 두께의 테두리 선 */
+      border-radius: 8px; /* 모서리를 둥글게 설정 */
+      padding: 12px 5px; /* 위아래 12픽셀, 좌우 5픽셀 안쪽 여백 */
+      color: var(--text-main); /* 글자 색상 */
+      cursor: pointer; /* 마우스를 올렸을 때 손가락 모양 포인터로 변경 */
+    }
+
+    /* 마우스나 터치로 선택된 인증 버튼에 부여되는 디자인입니다. 테두리가 금색으로 변합니다. */
+    .auth-method-btn.selected {
+      border-color: var(--accent); /* 테두리 선 색상을 금색 포인트 컬러로 변경 */
+      background: rgba(200,169,110,0.1); /* 금색을 아주 투명하게 만든 배경색을 넣음 */
+    }
+
+    /* 환자 ID를 직접 입력하는 글자 입력창의 디자인입니다. */
+    .auth-input-wrap input {
+      width: 100%; /* 입력창 너비를 상자 전체로 채움 */
+      padding: 12px; /* 글자가 상자 테두리에 붙지 않게 안쪽 여백을 줌 */
+      border-radius: 8px; /* 모서리를 둥글게 처리 */
+      border: 1px solid var(--border); /* 테두리 선 설정 */
+      background: var(--surface-light); /* 입력창 배경색 */
+      color: var(--text-main); /* 입력하는 글자 색상 */
+      margin-bottom: 15px; /* 아래에 있는 요소와 15픽셀 간격을 둠 */
+      outline: none; /* 입력창을 클릭했을 때 생기는 파란색 강조 선을 지움 */
+    }
+
+    /* 테스트용 환자 목록을 보여주는 상자의 디자인입니다. */
+    .demo-patients {
+      background: var(--surface-light); /* 배경색 설정 */
+      border-radius: 8px; /* 모서리를 둥글게 */
+      padding: 10px; /* 안쪽 여백 설정 */
+      margin-bottom: 15px; /* 아래 요소와 간격을 띄움 */
+      text-align: left; /* 글자들을 왼쪽으로 정렬 */
+    }
+
+    /* 테스트용 환자 목록 안의 개별 환자 버튼 모양입니다. */
+    .demo-item {
+      display: flex; /* 내부 글자 배치를 위해 플렉스 박스 사용 */
+      justify-content: space-between; /* 환자 이름은 왼쪽 끝, 상태는 오른쪽 끝으로 배치 */
+      padding: 6px 8px; /* 안쪽 여백 설정 */
+      background: var(--surface); /* 배경색 설정 */
+      margin-top: 5px; /* 위 항목과 조금 떨어지도록 바깥 여백 설정 */
+      border-radius: 4px; /* 모서리를 살짝 둥글게 */
+      cursor: pointer; /* 손가락 모양 마우스 포인터 적용 */
+      font-size: 13px; /* 글자 크기를 조금 작게 조절 */
+    }
+
+    /* 일반 환자 태그의 글자 색상(초록색 계열)입니다. */
+    .cond-normal   { color: #6aad8e; }
+    /* 당뇨 환자 태그의 글자 색상(위험을 뜻하는 붉은색)입니다. */
+    .cond-diabetes { color: var(--danger); }
+    /* 심장 질환 환자 태그의 글자 색상(주의를 뜻하는 노란색)입니다. */
+    .cond-heart    { color: var(--warning); }
+
+    /* 화면 전체 너비를 차지하는 커다란 버튼(로그인 인증, 결제 버튼 등)의 디자인입니다. */
+    .btn-block {
+      width: 100%; /* 가로 너비를 부모 상자에 맞춰 꽉 채움 */
+      padding: 14px; /* 버튼 아래위로 넓게 여백을 줌 */
+      background: var(--accent); /* 버튼 배경색을 금색 포인트 컬러로 설정 */
+      border: none; /* 테두리 선을 없앰 */
+      border-radius: 8px; /* 모서리를 둥글게 깎음 */
+      font-weight: bold; /* 글자를 두껍게 만듦 */
+      cursor: pointer; /* 손가락 모양 마우스 포인터 적용 */
+      color: #1a1a1a; /* 버튼 안의 글자를 어두운 검은색 계열로 지정 */
+    }
+
+    /* 로그인 성공 후 나타나는 진짜 자판기(메인 앱) 화면의 레이아웃 설정입니다. 처음에는 숨겨져 있습니다. */
+    #appScreen { display: none; flex-direction: column; flex: 1; }
+    /* 자바스크립트가 이 클래스 명을 추가하면 화면에 진짜 자판기 화면이 나타나게 됩니다. */
+    #appScreen.visible { display: flex; }
+
+    /* 자판기 맨 위 영역(로고, 환자 이름, 잔액 등이 나오는 곳)의 디자인입니다. */
+    header {
+      display: flex; /* 요소들을 가로로 나란히 배치하기 위해 플렉스 사용 */
+      justify-content: space-between; /* 로고는 왼쪽 끝, 정보들은 오른쪽 끝으로 정렬 */
+      align-items: center; /* 세로 기준 정중앙에 정렬 */
+      padding: 15px 20px; /* 안쪽 여백 설정 */
+      background: var(--surface); /* 머리말 배경색 */
+      border-bottom: 1px solid var(--border); /* 아래쪽에 얇은 구분선 생성 */
+    }
+
+    /* 현재 로그인한 환자의 이름과 병실이 적히는 작은 상자 모양입니다. */
+    .patient-badge {
+      background: var(--surface-light); /* 상자 배경색 */
+      padding: 6px 12px; /* 위아래 6픽셀, 좌우 12픽셀 여백 */
+      border-radius: 8px; /* 모서리를 정돈함 */
+      font-size: 13px; /* 조금 작은 글자 크기 */
+    }
+
+    /* 환자의 질환에 맞춰 상단에 뜨는 주의사항 알림창(배너)의 디자인입니다. 평소에는 숨겨져 있습니다. */
+    .health-banner {
+      display: none; /* 보이지 않도록 숨김 */
+      padding: 10px 20px; /* 안쪽 여백 */
+      font-size: 13px; /* 글자 크기 */
+      background: rgba(212,100,90,0.1); /* 투명한 붉은색 배경으로 위급함을 알림 */
+      border-bottom: 1px solid var(--border); /* 아래쪽 테두리 선 */
+    }
+    /* 특정 환자가 로그인하여 배너를 보여줘야 할 때 이 클래스 명이 추가되어 나타납니다. */
+    .health-banner.show { display: block; }
+
+    /* 커피, 논커피, 스무디 등의 메뉴 분류(카테고리) 버튼들이 모여있는 줄의 디자인입니다. */
+    .category-bar {
+      display: flex; /* 가로로 나란히 배치 */
+      gap: 10px; /* 버튼 사이 간격 10픽셀 */
+      padding: 12px 20px; /* 안쪽 여백 */
+      background: var(--surface); /* 배경색 */
+      border-bottom: 1px solid var(--border); /* 아래쪽 구분선 */
+    }
+
+    /* 선택되지 않은 일반 카테고리 버튼들의 모양입니다. */
+    .cat-btn {
+      background: transparent; /* 배경을 투명하게 설정 */
+      border: 1px solid var(--border); /* 흐릿한 테두리 선 생성 */
+      color: var(--text-muted); /* 흐릿한 글자 색상 */
+      padding: 6px 16px; /* 여백 설정 */
+      border-radius: 20px; /* 둥글고 긴 타원형 모양으로 만듦 */
+      cursor: pointer; /* 손가락 모양 마우스 포인터 적용 */
+    }
+
+    /* 현재 사용자가 선택하여 활성화된 카테고리 버튼의 모양입니다. 금색으로 강조됩니다. */
+    .cat-btn.active {
+      background: var(--accent); /* 배경을 금색으로 변경 */
+      border-color: var(--accent); /* 테두리 선도 금색으로 변경 */
+      color: #1a1a1a; /* 글자는 어두운색으로 변경 */
+      font-weight: bold; /* 글자를 두껍게 설정 */
+    }
+
+    /* 메뉴판 영역과 오른쪽 장바구니 영역을 묶어주는 전체 몸통 컨테이너입니다. */
+    .main-container { display: flex; flex: 1; }
+
+    /* 왼쪽 메뉴판 구역의 전체 디자인입니다. */
+    .menu-section { flex: 1; padding: 20px; }
+    /* 메뉴들을 바둑판 모양으로 정렬하는 구역입니다. */
+    .menu-grid {
+      display: grid; /* 그리드 레이아웃 사용 */
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* 화면 너비에 따라 최소 150픽셀짜리 카드가 자동으로 꽉 차게 조절 */
+      gap: 15px; /* 카드와 카드 사이의 상하좌우 간격은 15픽셀 */
+    }
+
+    /* 아메리카노, 딸기스무디 등 개별 메뉴 하나하나를 보여주는 사각형 카드의 디자인입니다. */
+    .menu-card {
+      background: var(--surface); /* 카드 배경색 */
+      border: 1px solid var(--border); /* 테두리 선 */
+      border-radius: 12px; /* 모서리를 둥글게 */
+      padding: 15px; /* 내부 여백 */
+      text-align: center; /* 글자와 아이콘을 가운데 정렬 */
+      cursor: pointer; /* 손가락 모양 포인터 */
+      position: relative; /* 내부에 절대 위치를 사용하는 요소(제한 태그)가 들어갈 기준점이 됨 */
+    }
+
+    /* 품절되었거나, 환자의 질환 때문에 주문이 불가능한 메뉴 카드에 적용되는 디자인입니다. */
+    .menu-card.sold-out, .menu-card.restricted {
+      opacity: 0.3; /* 카드를 70%만큼 아주 투명하게 만들어 흐리게 보이게 함 */
+      pointer-events: none; /* 클릭을 해도 아무런 반응이 일어나지 않도록 클릭 기능을 완전히 차단함 */
+    }
+
+    /* 질환 때문에 먹으면 안 되는 음료 카드 우측 상단에 붙는 '제한'이라는 붉은색 태그의 디자인입니다. */
+    .status-tag {
+      position: absolute; /* 부모 카드 상자의 오른쪽 위에 위치를 고정시킴 */
+      top: 8px; right: 8px; /* 위에서 8픽셀, 오른쪽에서 8픽셀 떨어진 곳에 배치 */
+      font-size: 10px; /* 글자를 아주 작게 설정 */
+      padding: 2px 6px; /* 글자 주변에 작은 여백 생성 */
+      border-radius: 4px; /* 태그 모서리를 살짝 깎음 */
+      background: var(--danger); /* 배경색을 경고/위험의 빨간색으로 지정 */
+    }
+
+    /* 화면 우측에 위치한 내가 고른 음료 목록(장바구니) 사이드바 패널의 디자인입니다. */
+    .order-panel {
+      width: 300px; /* 너비를 딱 300픽셀로 고정시킴 */
+      background: var(--surface); /* 사이드바 배경색 */
+      border-left: 1px solid var(--border); /* 왼쪽 면에만 세로 구분선 생성 */
+      display: flex; /* 내부 요소 정렬을 위해 플렉스 박스 적용 */
+      flex-direction: column; /* 요소들을 세로로 정렬 */
+      padding: 20px; /* 내부 여백 */
+    }
+
+    /* 장바구니 안에서 담긴 음료 아이템들이 나열되는 구역입니다. 음료가 많아지면 스크롤 바가 생깁니다. */
+    .order-items { flex: 1; overflow-y: auto; margin-bottom: 15px; }
+    /* 장바구니에 담긴 개별 음료 한 줄의 모양입니다. */
+    .order-item {
+      display: flex; /* 가로 배치 */
+      justify-content: space-between; /* 메뉴 이름은 왼쪽, 수량과 가격은 오른쪽 정렬 */
+      align-items: center; /* 세로 기준 가운데 정렬 */
+      padding: 10px 0; /* 위아래로 10픽셀씩 여백을 줌 */
+      border-bottom: 1px solid var(--border); /* 아이템끼리 구분하는 아래쪽 얇은 선 */
+      font-size: 13px; /* 글자 크기 */
+    }
+
+    /* 장바구니 안에서 음료 수량을 더하거나 빼는 (+, -) 작은 정사각형 버튼의 디자인입니다. */
+    .qty-btn {
+      width: 24px; height: 24px; /* 가로 세로 24픽셀 크기의 정사각형 */
+      background: var(--surface-light); /* 버튼 배경색 */
+      border: 1px solid var(--border); /* 테두리 선 */
+      color: white; /* 버튼 글자 색상(흰색) */
+      cursor: pointer; /* 손가락 모양 포인터 */
+    }
+
+    /* 화면 중앙에 팝업창(모달)이 뜰 때 뒷배경을 어둡게 흐리게 만드는 가림막 디자인입니다. */
+    .modal-backdrop {
+      display: none; /* 평소에는 숨겨둠 */
+      position: fixed; /* 화면에 자리를 완전히 고정시킴 */
+      inset: 0; /* 화면 전체를 채움 */
+      background: rgba(0,0,0,0.6); /* 검은색을 60% 만큼 불투명하게 하여 뒷배경을 어둡게 차단함 */
+      z-index: 200; /* 일반 화면들보다 위에 보이도록 설정 */
+      align-items: center; /* 팝업창을 가로 중앙에 배치 */
+      justify-content: center; /* 팝업창을 세로 중앙에 배치 */
+    }
+    /* 자바스크립트가 이 클래스를 추가하면 어두운 가림막과 함께 팝업창이 눈에 보이게 됩니다. */
+    .modal-backdrop.show { display: flex; }
+
+    /* 실제 팝업창(옵션 선택창, 충전창 등)의 하얀색/회색 사각형 박스 디자인입니다. */
+    .modal {
+      background: var(--surface); /* 팝업창 내부 배경색 */
+      border: 1px solid var(--border); /* 테두리 선 */
+      border-radius: 12px; /* 모서리를 부드럽게 둥글림 */
+      padding: 25px; /* 내부 여백 25픽셀 */
+      width: 90%; /* 모바일 화면 등을 위해 기본 너비를 90%로 잡고 */
+      max-width: 360px; /* 화면이 아무리 커져도 최대 360픽셀까지만 늘어나게 조절 */
+    }
+
+    /* 팝업창 내부에서 온도(ICE/HOT)나 당도 단계 버튼들이 가로로 나란히 배치되는 그리드입니다. */
+    .option-grid { display: flex; gap: 8px; margin: 10px 0 20px; }
+    /* 옵션을 고르는 개별 조각(칩) 버튼의 디자인입니다. */
+    .opt-chip {
+      flex: 1; /* 가로 공간을 똑같은 비율로 나누어 가짐 */
+      padding: 8px; /* 안쪽 여백 설정 */
+      background: var(--surface-light); /* 배경색 */
+      border: 1px solid var(--border); /* 테두리 선 */
+      color: white; /* 글자 색상 */
+      border-radius: 6px; /* 모서리를 살짝 깎음 */
+      cursor: pointer; /* 손가락 모양 포인터 */
+      text-align: center; /* 글자를 가운데 정렬 */
+    }
+    /* 사용자가 터치하여 선택한 옵션 조각 버튼의 강조 디자인입니다. */
+    .opt-chip.selected { border-color: var(--accent); color: var(--accent); }
+    /* 환자의 상태에 따라 고를 수 없게 막아버린 옵션 조각 버튼의 디자인입니다. */
+    .opt-chip.disabled-opt {
+      opacity: 0.2; /* 아주 투명하게(80%만큼) 흐려지게 만듦 */
+      cursor: not-allowed; /* 마우스를 올렸을 때 금지 모양 포인터로 변경 */
+      pointer-events: none; /* 클릭 이벤트를 완전히 없애서 터치해도 반응이 없게 만듦 */
+    }
+
+    /* 화면 아래쪽에 잠깐 떴다가 사라지는 간단한 안내 메시지(토스트 알림) 상자의 디자인입니다. */
+    .toast {
+      position: fixed; /* 화면 하단에 고정 */
+      bottom: 20px; left: 50%; /* 밑에서 20픽셀 위, 가로 기준 왼쪽에서 50% 지점에 배치한 뒤 */
+      transform: translateX(-50%); /* 정확히 정중앙에 오도록 왼쪽으로 자신의 절반 크기만큼 이동시킴 */
+      background: #6aad8e; /* 편안함을 주는 초록색 계열 배경색 사용 */
+      padding: 10px 20px; /* 안쪽 여백 설정 */
+      border-radius: 20px; /* 둥근 타원 모양 생성 */
+      z-index: 1000; /* 모든 화면 요소 중 최고 높은 최상단 층에 배치 */
+      display: none; /* 평소에는 안 보이게 숨겨둠 */
+    }
+  </style>
+</head>
+<body>
+
+<div id="authScreen">
+  <div class="auth-card">
+    <h2>🏥 환자 인증 시스템</h2>
+    <p style="color:var(--text-muted); font-size:12px; margin-top:5px;">환자 정보를 확인하여 안전한 음료를 추천합니다.</p>
+    
+    <div class="auth-methods">
+      <button class="auth-method-btn selected" onclick="selectMethod('card', this)">💳 카드</button>
+      <button class="auth-method-btn" onclick="selectMethod('band', this)">⌚ 밴드</button>
+      <button class="auth-method-btn" onclick="selectMethod('app', this)">📱 앱</button>
+    </div>
+
+    <div class="auth-input-wrap">
+      <input type="text" id="patientIdInput" placeholder="환자 ID 입력 (예: P001)">
+    </div>
+
+    <div class="demo-patients">
+      <div style="font-size:11px; color:var(--text-muted);">클릭 시 빠른 테스트 입력:</div>
+      <div id="demoPatientList"></div>
+    </div>
+
+    <button class="btn-block" onclick="doAuth()">로그인 인증</button>
+  </div>
+</div>
+<div id="appScreen">
+  <header>
+    <h3>Brew &amp; Bean Kiosk</h3>
+    <div style="display:flex; gap:15px; align-items:center;">
+      <div class="patient-badge" id="patientBadge">환자 정보 정보 없음</div>
+      <div>잔액: <span id="cardBalance" style="color:var(--accent)">₩0</span></div>
+      <button onclick="openChargeModal()" style="padding:4px 8px; cursor:pointer;">+ 충전</button>
+      <button onclick="logout()" style="padding:4px 8px; cursor:pointer;">로그아웃</button>
+    </div>
+  </header>
+
+  <div class="health-banner" id="healthBanner"></div>
+
+  <div class="category-bar" id="categoryBar">
+    <button class="cat-btn active" onclick="filterCategory('all', this)">전체</button>
+    <button class="cat-btn" onclick="filterCategory('coffee', this)">☕ 커피</button>
+    <button class="cat-btn" onclick="filterCategory('nonCoffee', this)">🍵 논커피</button>
+    <button class="cat-btn" onclick="filterCategory('smoothie', this)">🥤 스무디</button>
+  </div>
+
+  <div class="main-container">
+    <div class="menu-section">
+      <div class="menu-grid" id="menuGrid"></div>
+    </div>
+    
+    <div class="order-panel">
+      <h4>선택 내역</h4>
+      <div class="order-items" id="orderItems"></div>
+      <div style="margin-top:auto; padding-top:15px; border-top:1px solid var(--border);">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+          <span>총 금액</span>
+          <span id="orderTotal" style="color:var(--accent); font-weight:bold;">₩0</span>
+        </div>
+        <button class="btn-block" id="btnPay" onclick="openPayModal()">결제하기</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="optionModal">
+  <div class="modal">
+    <h3 id="optModalName">메뉴명</h3>
+    <p id="optModalPrice" style="color:var(--text-muted); font-size:13px; margin-bottom:15px;">가격</p>
+
+    <div id="sugarWarnBox" style="display:none; color:var(--warning); font-size:11px; margin-bottom:10px; background:rgba(224,168,74,0.1); padding:8px; border-radius:4px;">
+      ⚠️ 당뇨 환자는 카페인 섭취 시 혈당 변동에 주의하세요.
+    </div>
+
+    <div>
+      <span style="font-size:12px; color:var(--text-muted);">온도</span>
+      <div class="option-grid" id="optTemp"></div>
+    </div>
+    <div>
+      <span style="font-size:12px; color:var(--text-muted);">당도 단계</span>
+      <div class="option-grid" id="optSugar"></div>
+    </div>
+    
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button class="opt-chip" onclick="closeModal('optionModal')">취소</button>
+      <button class="opt-chip selected" onclick="addToCart()">장바구니 담기</button>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="chargeModal">
+  <div class="modal">
+    <h3>금액 충전</h3>
+    <div class="option-grid">
+      <button class="opt-chip" onclick="doCharge(10000)">+ 1만원</button>
+      <button class="opt-chip" onclick="doCharge(30000)">+ 3만원</button>
+    </div>
+    <button class="btn-block" onclick="closeModal('chargeModal')">닫기</button>
+  </div>
+</div>
+<div class="modal-backdrop" id="payModal">
+  <div class="modal" style="text-align:center;">
+    <h3>주문 결제</h3>
+    <p style="margin:15px 0;">정말로 결제하시겠습니까?</p>
+    <div style="display:flex; gap:10px;">
+      <button class="opt-chip" onclick="closeModal('payModal')">취소</button>
+      <button class="opt-chip selected" onclick="doPayment()">확인 결제</button>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="receiptModal">
+  <div class="modal" style="text-align:center;">
+    <h2>주문 성공! 🎉</h2>
+    <p style="margin:10px 0; color:var(--text-muted);">음료가 준비될 때까지 기다려 주세요.</p>
+    <button class="btn-block" onclick="closeModal('receiptModal')">확인</button>
+  </div>
+</div>
+<div class="toast" id="toast">알림 내용</div>
+
+
+<script>
+// 1. 샘플 데이터 설정 (키오스크 데이터베이스 저장소 데이터 관리)
+// 병원에 등록된 가상의 환자 3명의 기초 정보 데이터 세트입니다.
+const PATIENTS = [
+  { id: 'P001', name: '김민준', condition: 'normal', room: '301호' },  // 아픈 곳이 없는 일반 상태의 환자
+  { id: 'P002', name: '이서연', condition: 'diabetes', room: '214호' }, // 당뇨 상태의 환자: 단맛 조절 옵션을 강제 제약해야 함
+  { id: 'P003', name: '박도현', condition: 'heart', room: '508호' }     // 심장질환 상태의 환자: 카페인이 든 커피 판매를 강제 차단해야 함
+];
+
+// 이 자판기 매점에서 판매 중인 5가지 음료수 고유 메뉴들의 원본 사전 데이터 세트입니다.
+const MENU = [
+  { id: 1, cat: 'coffee', icon: '☕', name: '아메리카노', price: 3000, caffeine: true },  // 아메리카노 (커피, 카페인 있음)
+  { id: 2, cat: 'coffee', icon: '☕', name: '카페라떼', price: 3500, caffeine: true },    // 카페라떼 (커피, 카페인 있음)
+  { id: 3, cat: 'nonCoffee', icon: '🍫', name: '초코라떼', price: 4000, caffeine: false }, // 초코라떼 (논커피, 카페인 없음)
+  { id: 4, cat: 'nonCoffee', icon: '🍵', name: '말차라떼', price: 4000, caffeine: false }, // 말차라떼 (논커피, 카페인 없음)
+  { id: 5, cat: 'smoothie', icon: '🥤', name: '딸기스무디', price: 4500, caffeine: false } // 딸기스무디 (스무디, 카페인 없음)
+];
+
+// 사용자가 음료 옵션에서 선택할 수 있는 4가지의 설탕 당도 텍스트 단계 배열입니다.
+const SUGAR_OPTS = ['달지 않음', '덜 달게', '보통', '매우 달게'];
+
+
+// 2. 글로벌 앱 상태 관리 변수 (프로그램이 켜져 있는 동안 계속 바뀌는 수치들을 기억하는 임시 메모리 상자들)
+let currentPatient = null;  // 현재 키오스크를 터치해서 사용 중인 환자의 정보를 저장함 (처음에는 비어있음)
+let cardBalance = 30000;    // 환자가 가진 가상 카드의 돈 잔액 수치 (기본값 30,000원 설정)
+let cart = [];              // 사용자가 고른 음료들을 임시로 차곡차곡 모아 보관해두는 장바구니 바구니 목록 변수
+let currentItem = null;     // 사용자가 메뉴를 클릭했을 때, '어떤 음료의 옵션을 조절하고 있는지' 그 음료 정보를 붙잡아두는 변수
+let selectedTemp = 'ICE';   // 사용자가 옵션창에서 현재 터치해놓은 온도를 기억함 (기본 선택값 ICE)
+let selectedSugar = '보통'; // 사용자가 옵션창에서 현재 터치해놓은 당도를 기억함 (기본 선택값 보통)
+let currentCategory = 'all'; // 사용자가 현재 상단 카테고리 바에서 보고 있는 분류 기준 (기본값 전체 메뉴 보기)
+
+
+// 3. 앱 구동 초기화 함수 (웹 페이지가 브라우저에 첫 로딩되자마자 실행되는 첫 명령 세트)
+function init() {
+  // 인증 화면 아래쪽에 환자 3명의 테스트용 가상 간편 클릭 리스트 상자를 가져옵니다.
+  const listDiv = document.getElementById('demoPatientList');
+  // 환자 데이터 3개를 반복 계산하여 화면에 클릭 가능한 버튼 태그 문자열로 조립하여 집어넣습니다.
+  listDiv.innerHTML = PATIENTS.map(p => `
+    <div class="demo-item" onclick="quickSelectPatient('${p.id}')">
+      <span>${p.name} (${p.room})</span>
+      <strong>${p.condition === 'diabetes' ? '당뇨' : p.condition === 'heart' ? '심장' : '일반'}</strong>
+    </div>
+  `).join(''); // 배열 사이에 생기는 컴마 기호들을 빈 글자로 지워 깔끔하게 연결합니다.
+}
+
+// 테스트 목록에서 특정 환자를 터치했을 때, 키보드로 직접 입력하지 않아도 자동으로 아이디가 써지고 즉시 로그인 버튼이 눌러지도록 연동해주는 편의용 함수입니다.
+function quickSelectPatient(id) {
+  // 입력 필드 상자를 찾아 클릭된 환자의 고유 ID 텍스트를 대입합니다.
+  document.getElementById('patientIdInput').value = id;
+  // 곧바로 아래 정의된 로그인 처리 프로세스를 자동 호출합니다.
+  doAuth();
+}
+
+// 로그인 화면에서 카드, 밴드, 앱 세 가지의 방식 버튼 중 어떤 것을 터치했는지 시각적으로 골드 테두리를 옮겨 표시해주는 스위치 기능 함수입니다.
+function selectMethod(method, btn) {
+  // 모든 인증 버튼들에서 'selected'(선택됨 디자인) 클래스 명을 전부 지워 초기화합니다.
+  document.querySelectorAll('.auth-method-btn').forEach(b => b.classList.remove('selected'));
+  // 방금 사용자가 손가락으로 직접 터치한 그 버튼에만 'selected' 클래스 명을 붙여 황금색 테두리가 나타나게 만듭니다.
+  btn.classList.add('selected');
+}
+
+
+// 4. 환자 인증 프로세스 (입력한 ID가 데이터베이스에 진짜 존재하는지 검사하고 자판기 화면을 열어주는 제어소)
+function doAuth() {
+  // 사용자가 입력 칸에 적은 글자를 가져와 공백을 지우고 소문자가 있다면 전부 영어 대문자로 바꿉니다.
+  const idInput = document.getElementById('patientIdInput').value.trim().toUpperCase();
+  // 가상 환자 데이터베이스 전체 목록 중에서, 입력된 ID값과 완전히 일치하는 환자 정보 한 명을 검색하여 찾아냅니다.
+  const found = PATIENTS.find(p => p.id === idInput);
+
+  // 만약 일치하는 환자 번호가 검색되지 않고 비어있다면, 경고창을 띄우고 아래 로그인을 전면 취소 중단시킵니다.
+  if (!found) {
+    alert('존재하지 않는 환자 번호입니다.');
+    return;
+  }
+
+  // 일치하는 환자를 찾았다면, 현재 사용 중인 환자 상고 변수(currentPatient)에 그 환자의 모든 신원 데이터를 대입하여 저장합니다.
+  currentPatient = found;
+  cardBalance = 30000; // 테스트를 시작할 수 있게 가상 금액 잔액을 항상 30,000원으로 매번 새롭게 강제 충전 세팅해 줍니다.
+  cart = []; // 이전 사용자가 담아두었을지 모르는 장바구니 리스트를 깨끗하게 청소하여 비웁니다.
+
+  // 로그인 인증 페이지를 화면에서 완전히 숨겨 보이지 않게 만듭니다.
+  document.getElementById('authScreen').style.display = 'none';
+  // 진짜 자판기 상점 화면 상자에 'visible' 클래스를 추가하여 눈앞에 화려하게 나타나도록 스위치를 켭니다.
+  document.getElementById('appScreen').classList.add('visible');
+
+  // 자판기 상단 머리말 영역에 방금 로그인한 환자의 진짜 이름과 입원 중인 병실 호수 글자를 매칭하여 채워 넣습니다.
+  document.getElementById('patientBadge').innerHTML = `${currentPatient.name} (${currentPatient.room})`;
+  
+  // 로그인한 환자의 몸 상태(질환) 정보를 추적하여 상단 위험 안내 알림 배너 문구를 제어합니다.
+  const banner = document.getElementById('healthBanner');
+  if (currentPatient.condition === 'diabetes') {
+    // 환자가 당뇨 환자라면, 배너에 고당도 옵션 금지 알림 글씨를 채워 넣고 화면에 노출시킵니다.
+    banner.innerHTML = '⚠️ <strong>당뇨 주의 환자:</strong> 고당도(매우 달게) 옵션 선택이 제한됩니다.';
+    banner.className = 'health-banner show';
+  } else if (currentPatient.condition === 'heart') {
+    // 환자가 심장 질환자라면, 배너에 커피 전면 차단 안내 글씨를 채워 넣고 화면에 노출시킵니다.
+    banner.innerHTML = '❌ <strong>심장 질환 환자:</strong> 카페인이 포함된 커피 메뉴 주문이 전면 제한됩니다.';
+    banner.className = 'health-banner show';
+  } else {
+    // 일반 상태의 건강한 환자라면 아무런 경고도 필요 없으므로 배너를 다시 숨겨 보이지 않게 처리합니다.
+    banner.className = 'health-banner';
+  }
+
+  // 변경된 데이터를 기반으로 자판기 메뉴판과 장바구니를 새롭게 그려주는 전체 리렌더링 마스터 함수를 작동시킵니다.
+  renderAll();
+}
+
+// 자판기 사용을 끝내고 초기 로그인 첫 화면으로 깔끔하게 돌려보내는 로그아웃 처리 함수입니다.
+function logout() {
+  currentPatient = null; // 메모리에 저장되어 있던 환자의 신원 데이터를 완벽히 삭제하여 비웁니다.
+  document.getElementById('appScreen').classList.remove('visible'); // 메인 자판기 화면 상자를 감추어 보이지 않게 차단합니다.
+  document.getElementById('authScreen').style.display = 'flex'; // 첫 환자 인증 로그인 화면 상자를 다시 눈앞에 노출시킵니다.
+  document.getElementById('patientIdInput').value = ''; // 이전에 써있던 입력창 안의 글자 ID 텍스트들을 깨끗이 지웁니다.
+}
+
+
+// 5. 메뉴 및 주문 내역 데이터 렌더링 화면 출력 (데이터 메모리를 읽어 눈에 보이는 HTML 태그로 매번 새롭게 그려주는 핵심 기능 단위들)
+function renderMenu() {
+  // 음료 카드들이 들어갈 빈 그리드 상자 요소를 받아옵니다.
+  const grid = document.getElementById('menuGrid');
+  // 사용자가 전체를 누르면 원본 메뉴판 전체를 가져오고, 특정 탭을 누르면 해당 카테고리와 영문 글자(cat)가 일치하는 음료 종류만 걸러서 새 리스트를 만듭니다.
+  const filtered = currentCategory === 'all' ? MENU : MENU.filter(m => m.cat === currentCategory);
+
+  // 걸러진 최종 음료 리스트를 하나씩 순회하며 자판기 판매용 네모난 카드 모양의 HTML 코드로 자동 번역 조립합니다.
+  grid.innerHTML = filtered.map(item => {
+    let isRestricted = false; // 이 음료를 강제로 못 사게 차단할지 여부를 판정하는 스위치 플래그입니다. 기본값은 해제(false)입니다.
+    let tagHtml = ''; // 음료 카드 오른쪽 위에 붙여줄 글자 태그 공간입니다.
+
+    // 환자 질환 조건별 음료 원천 차단 체크 로직 작동 구역입니다.
+    // 현재 로그인한 환자가 존재하고, 그 환자의 병명이 '심장질환(heart)'이면서, 고른 음료가 카페인이 포함(caffeine: true)된 제품이라면 무조건 참으로 걸려듭니다.
+    if (currentPatient && currentPatient.condition === 'heart' && item.caffeine) {
+      isRestricted = true; // 이 음료 카드는 판매 금지 상태(true)로 판정을 내립니다.
+      tagHtml = '<span class="status-tag">제한</span>'; // 카드에 부착할 붉은색 '제한' 딱지 코드를 생성합니다.
+    }
+
+    // 최종 판정된 조건들을 버무려 실제 웹 화면에 그려질 메뉴 카드 상자 한 개를 텍스트 코드로 출력 환원합니다.
+    return `
+      <div class="menu-card ${isRestricted ? 'restricted' : ''}" onclick="openOptionModal(${item.id})">
+        ${tagHtml} <div style="font-size:30px;">${item.icon}</div> <div style="font-weight:bold; font-size:14px; margin:5px 0;">${item.name}</div> <div style="color:var(--accent); font-size:13px;">₩${item.price.toLocaleString()}</div> </div>
+    `;
+  }).join(''); // 조립된 모든 메뉴 카드 텍스트들을 공백 없이 하나로 합쳐서 실제 그리드 상자 안에 강제로 덮어씌워 렌더링을 끝냅니다.
+}
+
+// 우측 장바구니 영역에 담긴 내역을 실시간 수치에 맞게 다시 그려주는 화면 출력 함수입니다.
+function renderCart() {
+  const itemsDiv = document.getElementById('orderItems');
+  // 만약 장바구니 목록 배열에 아무것도 담겨있지 않아 칸의 개수가 0개라면 작동합니다.
+  if (cart.length === 0) {
+    itemsDiv.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:30px 0;">비어있음</div>'; // 비어있다는 안내 문구를 출력합니다.
+    document.getElementById('orderTotal').textContent = '₩0'; // 총금액 표시 글자도 0원으로 강제 초기화 처리합니다.
+    return; // 아래 계산 수식들을 실행하지 않고 즉시 이 함수를 빠져나갑니다.
+  }
+
+  // 장바구니 배열 안에 들어있는 아이템 목록을 하나씩 한 줄짜리 장바구니 행 디자인 HTML 코드로 가공합니다.
+  itemsDiv.innerHTML = cart.map((item, index) => `
+    <div class="order-item">
+      <div>
+        <div><strong>${item.menu.name}</strong></div> <div style="font-size:11px; color:var(--text-muted);">${item.temp} / ${item.sugar}</div> </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span>₩${(item.menu.price * item.qty).toLocaleString()}</span>
+        <div>
+          <button class="qty-btn" onclick="changeQty(${index}, -1)">-</button>
+          <span style="display:inline-block; width:15px; text-align:center;">${item.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${index}, 1)">+</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // 장바구니 전체 목록을 싹 훑으면서 (각 음료 단가 * 개수)를 전부 누적하여 다 더해 총합계 금액을 계산해냅니다.
+  const total = cart.reduce((sum, item) => sum + (item.menu.price * item.qty), 0);
+  // 계산된 최종 총합 가격 숫자를 우측 하단의 총금액 글자 자리에 화폐 단위를 붙여 세팅합니다.
+  document.getElementById('orderTotal').textContent = `₩${total.toLocaleString()}`;
+  
+  // 환자가 가진 가상 잔액보다 사려고 담아놓은 총 금액이 더 커서 돈이 모자라는 상황인지를 체크합니다.
+  // 돈이 부족하면 결제하기 버튼의 비활성화(disabled) 스위치를 켜서 버튼을 먹통으로 막아버립니다.
+  document.getElementById('btnPay').disabled = total > cardBalance;
+}
+
+// 화면상의 잔액 글씨를 고치고 메뉴판과 장바구니를 한까번에 순차적으로 동시 리렌더링 처리해주는 마스터 출력 총괄 함수입니다.
+function renderAll() {
+  // 화면 상단 우측에 있는 가상 잔액 텍스트를 현재 메모리 금액 수치에 맞게 쉼표를 찍어 덮어씁니다.
+  document.getElementById('cardBalance').textContent = `₩${cardBalance.toLocaleString()}`;
+  renderMenu(); // 메뉴판 다시 그리기 작동
+  renderCart(); // 장바구니 다시 그리기 작동
+}
+
+// 사용자가 커피, 논커피 등의 카테고리 분류 버튼을 마우스로 딸칵 터치했을 때 작동하는 필터 변경 함수입니다.
+function filterCategory(cat, btn) {
+  currentCategory = cat; // 전역 분류 기준 변수에 방금 터치된 분류 영문명(cat)을 새로 덮어써서 기준을 바꿉니다.
+  // 모든 카테고리 탭 버튼들에서 검은색 하이라이트 배경 불빛인 'active' 클래스를 모조리 회수하여 지웁니다.
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  // 방금 사용자가 터치한 그 개별 카테고리 버튼 하나에만 'active' 클래스를 붙여 금색으로 활성화 불을 켭니다.
+  btn.classList.add('active');
+  // 바뀐 카테고리 기준에 맞춰 메뉴판을 새롭게 가공하여 필터링 출력하라고 명령을 내립니다.
+  renderMenu();
+}
+
+
+// 6. 음료 옵션 선택 팝업 모달 제어 함수 (음료 카드를 눌렀을 때 세부 옵션을 고르는 커스텀 창을 생성하고 제한을 적용하는 곳)
+function openOptionModal(id) {
+  // 원본 메뉴 사전 데이터베이스에서 사용자가 방금 터치한 카드의 고유 식별 번호(id)와 정확히 일치하는 음료 객체를 찾아서 저장합니다.
+  currentItem = MENU.find(m => m.id === id);
+  selectedTemp = 'ICE'; // 옵션 창이 새로 열릴 때마다 온도는 항상 차가운 ICE 상태로 강제 초기 기본값 리셋을 해둡니다.
+  selectedSugar = '보통'; // 옵션 창이 새로 열릴 때마다 당도도 항상 보통 단계 상태로 강제 초기 기본값 리셋을 해둡니다.
+
+  // 팝업창 상단의 메인 제목 글씨를 방금 선택한 음료 한글 이름으로 수정 세팅합니다.
+  document.getElementById('optModalName').textContent = currentItem.name;
+  // 팝업창 상단의 서브 가격 안내 문구를 해당 음료의 가격 수치를 읽어와 콤마를 찍어 고쳐 써줍니다.
+  document.getElementById('optModalPrice').textContent = `가격: ₩${currentItem.price.toLocaleString()}`;
+
+  // 당뇨 환자가 카페인 음료를 섭취할 때 주의하라는 노란색 경고박스의 노출 여부를 판정합니다.
+  const sugarWarn = document.getElementById('sugarWarnBox');
+  // 현재 로그인한 사용자가 당뇨병 환자이면서 동시에 선택한 음료가 카페인이 들어있는 제품(true)일 때만 상자를 눈에 보이게('block') 켜고, 아니라면 숨깁니다('none').
+  sugarWarn.style.display = (currentPatient.condition === 'diabetes' && currentItem.caffeine) ? 'block' : 'none';
+
+  // 팝업창 내부에 ICE와 HOT 두 종류의 온도 토글 선택 조각 버튼 세트를 코드로 조립해 집어넣습니다.
+  document.getElementById('optTemp').innerHTML = ['ICE', 'HOT'].map(t => `
+    <div class="opt-chip ${t === selectedTemp ? 'selected' : ''}" onclick="pickOption('temp', '${t}', this)">${t}</div>
+  `).join('');
+
+  // 매우 중요한 당도 옵션 버튼 4개를 조립하며, 환자의 지병에 맞춰 위험 옵션 한 개를 강제로 잠금 처리하는 핵심 로직입니다.
+  document.getElementById('optSugar').innerHTML = SUGAR_OPTS.map(s => {
+    // 현재 사용자가 당뇨병 환자(diabetes)인 상태인데 고르고 있는 당도 글자 단어가 '매우 달게' 문장일 경우에만 완벽한 강제 제약 상태로 판정합니다.
+    const isRestrictedSugar = (currentPatient.condition === 'diabetes' && s === '매우 달게');
+    return `
+      <div class="opt-chip ${s === selectedSugar ? 'selected' : ''} ${isRestrictedSugar ? 'disabled-opt' : ''}" 
+           /* 위험 옵션 판정에 걸려들었다면 버튼 클릭 시 아무 함수도 실행하지 않고 완전히 무시하고(''), 안전한 일반 옵션 상태라면 정상적으로 옵션 선택 함수(pickOption)를 연결합니다. */
+           onclick="${isRestrictedSugar ? '' : `pickOption('sugar', '${s}', this)`}">
+        ${s} ${isRestrictedSugar ? '🚫' : ''}
+      </div>
+    `;
+  }).join('');
+
+  // 모든 세팅 조립이 끝난 세부 옵션 선택 모달창 팝업 레이어를 화면에 띄우라고 유틸리티 명령을 보냅니다.
+  openModal('optionModal');
+}
+
+// 옵션 선택창 내부에서 사용자가 ICE 버튼을 누르거나, 보통 당도 버튼 등을 누를 때마다 어떤 글자가 선택되었는지 임시 메모리 값을 바꾸는 기능입니다.
+function pickOption(type, value, element) {
+  if (type === 'temp') selectedTemp = value; // 온도 영역 버튼을 누른 거라면 온도 메모리 값을 방금 누른 글자(예: HOT)로 바꿉니다.
+  if (type === 'sugar') selectedSugar = value; // 당도 영역 버튼을 누른 거라면 당도 메모리 값을 방금 누른 글자(예: 덜 달게)로 바꿉니다.
+
+  // 사용자가 어떤 버튼을 눌렀는지 시각적인 불빛 피드백을 실시간으로 이동시켜 주는 디자인 변경 제어입니다.
+  // 터치된 버튼이 소속된 가로 라인 안의 모든 조각 버튼들의 황금색 테두리 선택 클래스('selected')를 전부 빼앗아 초기화한 뒤
+  element.closest('.option-grid').querySelectorAll('.opt-chip').forEach(c => c.classList.remove('selected'));
+  // 방금 사용자가 터치하여 바꾼 그 단 한 개의 버튼 요소에만 다시 황금색 'selected' 하이라이트 클래스를 부착해 불을 켭니다.
+  element.classList.add('selected');
+}
+
+
+// 7. 장바구니 데이터 적재 및 수량 핸들링 조작 (장바구니 담기 버튼을 눌렀을 때의 연산 처리)
+function addToCart() {
+  // 이미 장바구니 바구니 리스트 안에 '똑같은 음료 ID'이면서 '선택한 온도와 당도까지 완벽히 똑같은 품목'이 과거에 먼저 담긴 적이 있었는지 대조 검사합니다.
+  const existing = cart.find(c => c.menu.id === currentItem.id && c.temp === selectedTemp && c.sugar === selectedSugar);
+  
+  if (existing) {
+    // 만약 과거에 완전히 똑같은 조합으로 담아둔 내역이 이미 발견되었다면, 목록 줄을 새로 한 줄 더 만들지 않고 기존 아이템의 주문 잔 수 수량(qty)만 1개 더 더해 늘려줍니다.
+    existing.qty++;
+  } else {
+    // 장바구니에 없던 완전히 새로운 음료이거나 옵션 조합이 다를 경우에는, 장바구니 배열 변수 맨 뒤에 새롭게 커스텀 조립된 새 음료 주문 한 건 객체를 생성하여 통째로 밀어 넣습니다.
+    cart.push({ menu: currentItem, temp: selectedTemp, sugar: selectedSugar, qty: 1 });
+  }
+
+  // 볼일이 끝난 세부 옵션 팝업 선택창 상자를 닫아서 화면에서 지웁니다.
+  closeModal('optionModal');
+  // 화면 중앙 하단에 방금 어떤 음료 상품을 장바구니에 몇 잔 추가해 담았는지 알려주는 초록색 임시 알림 토스트 팝업을 작동시킵니다.
+  triggerToast(`${currentItem.name} 상품을 담았습니다.`);
+  // 새롭게 가공된 장바구니 목록과 총합 계산 잔액 연산을 화면에 다시 그리도록 총괄 출력 함수를 호출합니다.
+  renderAll();
+}
+
+// 장바구니 안에서 개별 품목 우측에 붙은 수량 변경 플러스/마이너스 버튼을 터치했을 때의 제어소입니다.
+function changeQty(index, offset) {
+  // 장바구니의 특정 번호 줄(index)에 들어있는 음료 수량 수치에 변경값(offset이 +1이면 더해지고, -1이면 빠짐)을 계산하여 대입합니다.
+  cart[index].qty += offset;
+  // 만약 마이너스 빼기 버튼을 계속 연타하여 주문 수량 숫자가 0개 이하(0이나 음수)로 내려앉아 버린다면 작동합니다.
+  if (cart[index].qty <= 0) {
+    // 장바구니 목록 배열에서 해당 줄 항목을 영구 탈착(삭제) 시켜 완전히 지워버립니다.
+    cart.splice(index, 1);
+  }
+  // 수량 변동 및 삭제 연산이 완전히 완료된 새 상태 결과를 화면에 동기화하여 다시 출력합니다.
+  renderAll();
+}
+
+
+// 8. 카드 충전 및 결제 서브 흐름 (진짜 돈을 계산하여 차감하고 완료 영수증을 띄우는 가상 금융 처리 영역)
+function openChargeModal() { openModal('chargeModal'); } // 충전 팝업창의 숨김 스위치를 해제하여 눈앞에 보여지게 켭니다.
+
+// 금액 충전 팝업창 안에서 만원이나 삼만원 버튼을 터치했을 때 실제 가상 카드의 돈을 올려주는 함수입니다.
+function doCharge(amount) {
+  cardBalance += amount; // 현재 가지고 있는 가상 지갑 카드 잔액 메모리 값에 방금 충전 요청한 금액 숫자를 더해 누적합니다.
+  closeModal('chargeModal'); // 볼일이 끝난 금액 충전용 팝업 상자를 화면에서 숨겨 끕니다.
+  triggerToast(`${amount.toLocaleString()}원 충전이 완료되었습니다.`); // 얼마가 성공적으로 지갑에 들어갔는지 초록색 토스트 알림창으로 메시지를 알립니다.
+  renderAll(); // 늘어난 지갑 잔액 수치를 상단 머리말 잔액 텍스트 칸에 최신화하여 다시 표기해 줍니다.
+}
+
+// 장바구니 아래쪽 결제하기 큰 버튼을 눌렀을 때 최종 관문 확인창을 여는 통로 함수입니다.
+function openPayModal() {
+  if (cart.length === 0) return; // 만약 장바구니 바구니 자체가 완전히 텅텅 비어있다면, 결제를 진행할 이유가 없으므로 아래 팝업을 열지 않고 함수를 취소 중단시킵니다.
+  openModal('payModal'); // 장바구니에 물건이 단 1개라도 담겨있다면 정말로 결제할 것인지 최종 동의를 구하는 확인 팝업창을 화면에 띄웁니다.
+}
+
+// 결제 확인창에서 최종적으로 '확인 결제' 승인 버튼을 확정 터치했을 때 일어나는 메인 정산 연산 함수입니다.
+function doPayment() {
+  // 장바구니 목록을 전부 뒤져서 사기로 확정한 음료들의 최종 총 가격 값 금액 수치를 다시 한번 명확하게 정산 계산해냅니다.
+  const total = cart.reduce((sum, item) => sum + (item.menu.price * item.qty), 0);
+  cardBalance -= total; // 현재 환자의 지갑 카드 잔액 메모리에서 방금 계산해낸 총 결제금액 수치만큼의 돈을 마이너스 차감하여 깎아버립니다.
+  cart = []; // 구매가 끝났으므로 내가 고른 물건들이 임시 보관되어 있던 장바구니 배열 보관함을 빈 상자로 깨끗이 초기화합니다.
+  
+  closeModal('payModal'); // 돈을 깎았으므로 결제 여부를 묻던 최종 동의 확인 팝업 상자는 닫아서 치웁니다.
+  openModal('receiptModal'); // 화면 전체에 "주문 성공! 음료가 나올 때까지 기다려 달라"는 폭죽 이모지가 담긴 최종 완료 성공 영수증 팝업창을 성대하게 띄웁니다.
+  renderAll(); // 돈이 차감된 상태와 텅 빈 장바구니 상태의 최신 변화 결과를 자판기 메인 화면 구석구석에 실시간으로 다시 업데이트 출력해 줍니다.
+}
+
+
+// 9. 다용도 UI 유틸리티 기능 함수들 (자주 쓰이는 귀찮은 투명도 제어 작업들을 한 줄짜리 명령어 코드로 요약해둔 도구함)
+function openModal(id) { document.getElementById(id).classList.add('show'); } // 명시한 특정 고유 아이디(id)의 팝업창 가림막 상자에 'show' 클래스를 붙여 화면에 드러나게 만듭니다.
+function closeModal(id) { document.getElementById(id).classList.remove('show'); } // 명시한 특정 고유 아이디(id)의 팝업창 가림막 상자에서 'show' 클래스를 강제로 떼어내 화면에서 안 보이게 숨깁니다.
+
+// 화면 하단 중앙에 안내 메시지를 띄우고 정확히 2초 후에 혼자서 사르르 꺼지게 타이머 작동 처리를 해주는 자동 토스트 알림 제어기입니다.
+function triggerToast(msg) {
+  const t = document.getElementById('toast'); // 하단 토스트 문구 전용 상자 태그 요소를 찾습니다.
+  t.textContent = msg; // 상자 내부의 글자 알림 내용을 방금 전달받은 새로운 안내 문장 텍스트로 고쳐 씁니다.
+  t.style.display = 'block'; // 숨겨져 있던 안내 상자의 스타일 디스플레이 규칙을 'block'으로 변환하여 화면에 번쩍 나타나게 불을 켭니다.
+  
+  // 브라우저 내장 초시계 타이머(setTimeout)를 구동하여, 정확히 2000밀리초(즉, 2초)의 시간이 흘러 지나가는 순간 내부에 적힌 마법 코드를 단 한 번 실행하도록 지연 예약합니다.
+  setTimeout(() => t.style.display = 'none', 2000); // 2초의 타이머 벨이 울리는 순간 토스트 상자의 디스플레이 규칙을 다시 'none'으로 뒤집어 혼자 눈앞에서 감쪽같이 사라지게 청소 처리합니다.
+}
+
+// ── [최초 화면 로드 실행부] ──
+// 이 파일의 코드가 위에서부터 아래로 차례대로 다 읽혀 내려와 웹브라우저 로딩이 완벽히 끝난 바로 그 순간, 컴퓨터에게 3번에 정의되어 있던 자판기 첫 초기화 기동 함수(init)를 자동으로 즉시 실행하라고 제일 먼저 트리거 신호를 쏘며 전체 프로그램을 힘차게 시작합니다.
+init();
+</script>
+
+</body>
+</html>
+
+```

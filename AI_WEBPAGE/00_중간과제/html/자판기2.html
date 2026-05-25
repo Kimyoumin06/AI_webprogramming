@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>간결한 병원 무인카페 키오스크</title>
+  <style>
+    /* ── [1] 기본 스타일 및 테마 설정 ── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --bg-dark: #1a1a1a;
+      --surface: #242424;
+      --surface-light: #2e2e2e;
+      --border: #3a3a3a;
+      --accent: #c8a96e; /* 기본 골드 포인트 컬러 */
+      --text-main: #f0ece4;
+      --text-muted: #a09890;
+      --danger: #d4645a;
+      --warning: #e0a84a;
+    }
+
+    body {
+      font-family: sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── [2] 인증 화면 (초기 화면) ── */
+    #authScreen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-dark);
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 30px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .auth-methods {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .auth-method-btn {
+      background: var(--surface-light);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 5px;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    .auth-method-btn.selected {
+      border-color: var(--accent);
+      background: rgba(200,169,110,0.1);
+    }
+
+    .auth-input-wrap input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface-light);
+      color: var(--text-main);
+      margin-bottom: 15px;
+      outline: none;
+    }
+
+    .demo-patients {
+      background: var(--surface-light);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .demo-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 8px;
+      background: var(--surface);
+      margin-top: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    /* 환자 상태별 색상 태그 */
+    .cond-normal   { color: #6aad8e; }
+    .cond-diabetes { color: var(--danger); }
+    .cond-heart    { color: var(--warning); }
+
+    .btn-block {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #1a1a1a;
+    }
+
+    /* ── [3] 메인 앱 화면 레이아웃 ── */
+    #appScreen { display: none; flex-direction: column; flex: 1; }
+    #appScreen.visible { display: flex; }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .patient-badge {
+      background: var(--surface-light);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    /* 질환 공지 배너 */
+    .health-banner {
+      display: none;
+      padding: 10px 20px;
+      font-size: 13px;
+      background: rgba(212,100,90,0.1);
+      border-bottom: 1px solid var(--border);
+    }
+    .health-banner.show { display: block; }
+
+    /* 카테고리 탭 */
+    .category-bar {
+      display: flex;
+      gap: 10px;
+      padding: 12px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cat-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+
+    .cat-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #1a1a1a;
+      font-weight: bold;
+    }
+
+    /* 메인 콘텐츠 메인 본문 구획 */
+    .main-container { display: flex; flex: 1; }
+
+    /* 메뉴 그리드 */
+    .menu-section { flex: 1; padding: 20px; }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+    }
+
+    .menu-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+    }
+
+    /* 품절 및 제한 메뉴 처리 (단순 투명도 조절) */
+    .menu-card.sold-out, .menu-card.restricted {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    .status-tag {
+      position: absolute;
+      top: 8px; right: 8px;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--danger);
+    }
+
+    /* 우측 주문 내역 사이드바 */
+    .order-panel {
+      width: 300px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .order-items { flex: 1; overflow-y: auto; margin-bottom: 15px; }
+    .order-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .qty-btn {
+      width: 24px; height: 24px;
+      background: var(--surface-light);
+      border: 1px solid var(--border);
+      color: white;
+      cursor: pointer;
+    }
+
+    /* ── [4] 모달 팝업 공통 스타일 ── */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-backdrop.show { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 25px;
+      width: 90%;
+      max-width: 360px;
+    }
+
+    .option-grid { display: flex; gap: 8px; margin: 10px 0 20px; }
+    .opt-chip {
+      flex: 1;
+      padding: 8px;
+      background: var(--surface-light);
+      border: 1px solid var(--border);
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .opt-chip.selected { border-color: var(--accent); color: var(--accent); }
+    .opt-chip.disabled-opt { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+
+    /* 토스트 알림 */
+    .toast {
+      position: fixed;
+      bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+      background: #6aad8e;
+      padding: 10px 20px;
+      border-radius: 20px;
+      z-index: 1000;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div id="authScreen">
+  <div class="auth-card">
+    <h2>🏥 환자 인증 시스템</h2>
+    <p style="color:var(--text-muted); font-size:12px; margin-top:5px;">환자 정보를 확인하여 안전한 음료를 추천합니다.</p>
+    
+    <div class="auth-methods">
+      <button class="auth-method-btn selected" onclick="selectMethod('card', this)">💳 카드</button>
+      <button class="auth-method-btn" onclick="selectMethod('band', this)">⌚ 밴드</button>
+      <button class="auth-method-btn" onclick="selectMethod('app', this)">📱 앱</button>
+    </div>
+
+    <div class="auth-input-wrap">
+      <input type="text" id="patientIdInput" placeholder="환자 ID 입력 (예: P001)">
+    </div>
+
+    <div class="demo-patients">
+      <div style="font-size:11px; color:var(--text-muted);">클릭 시 빠른 테스트 입력:</div>
+      <div id="demoPatientList"></div>
+    </div>
+
+    <button class="btn-block" onclick="doAuth()">로그인 인증</button>
+  </div>
+</div>
+
+<div id="appScreen">
+  <header>
+    <h3>Brew &amp; Bean Kiosk</h3>
+    <div style="display:flex; gap:15px; align-items:center;">
+      <div class="patient-badge" id="patientBadge">환자 정보 정보 없음</div>
+      <div>잔액: <span id="cardBalance" style="color:var(--accent)">₩0</span></div>
+      <button onclick="openChargeModal()" style="padding:4px 8px; cursor:pointer;">+ 충전</button>
+      <button onclick="logout()" style="padding:4px 8px; cursor:pointer;">로그아웃</button>
+    </div>
+  </header>
+
+  <div class="health-banner" id="healthBanner"></div>
+
+  <div class="category-bar" id="categoryBar">
+    <button class="cat-btn active" onclick="filterCategory('all', this)">전체</button>
+    <button class="cat-btn" onclick="filterCategory('coffee', this)">☕ 커피</button>
+    <button class="cat-btn" onclick="filterCategory('nonCoffee', this)">🍵 논커피</button>
+    <button class="cat-btn" onclick="filterCategory('smoothie', this)">🥤 스무디</button>
+  </div>
+
+  <div class="main-container">
+    <div class="menu-section">
+      <div class="menu-grid" id="menuGrid"></div>
+    </div>
+    
+    <div class="order-panel">
+      <h4>선택 내역</h4>
+      <div class="order-items" id="orderItems"></div>
+      <div style="margin-top:auto; padding-top:15px; border-top:1px solid var(--border);">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+          <span>총 금액</span>
+          <span id="orderTotal" style="color:var(--accent); font-weight:bold;">₩0</span>
+        </div>
+        <button class="btn-block" id="btnPay" onclick="openPayModal()">결제하기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="optionModal">
+  <div class="modal">
+    <h3 id="optModalName">메뉴명</h3>
+    <p id="optModalPrice" style="color:var(--text-muted); font-size:13px; margin-bottom:15px;">가격</p>
+
+    <div id="sugarWarnBox" style="display:none; color:var(--warning); font-size:11px; margin-bottom:10px; background:rgba(224,168,74,0.1); padding:8px; border-radius:4px;">
+      ⚠️ 당뇨 환자는 카페인 섭취 시 혈당 변동에 주의하세요.
+    </div>
+
+    <div>
+      <span style="font-size:12px; color:var(--text-muted);">온도</span>
+      <div class="option-grid" id="optTemp"></div>
+    </div>
+    <div>
+      <span style="font-size:12px; color:var(--text-muted);">당도 단계</span>
+      <div class="option-grid" id="optSugar"></div>
+    </div>
+    
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button class="opt-chip" onclick="closeModal('optionModal')">취소</button>
+      <button class="opt-chip selected" onclick="addToCart()">장바구니 담기</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="chargeModal">
+  <div class="modal">
+    <h3>금액 충전</h3>
+    <div class="option-grid">
+      <button class="opt-chip" onclick="doCharge(10000)">+ 1만원</button>
+      <button class="opt-chip" onclick="doCharge(30000)">+ 3만원</button>
+    </div>
+    <button class="btn-block" onclick="closeModal('chargeModal')">닫기</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="payModal">
+  <div class="modal" style="text-align:center;">
+    <h3>주문 결제</h3>
+    <p style="margin:15px 0;">정말로 결제하시겠습니까?</p>
+    <div style="display:flex; gap:10px;">
+      <button class="opt-chip" onclick="closeModal('payModal')">취소</button>
+      <button class="opt-chip selected" onclick="doPayment()">확인 결제</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="receiptModal">
+  <div class="modal" style="text-align:center;">
+    <h2>주문 성공! 🎉</h2>
+    <p style="margin:10px 0; color:var(--text-muted);">음료가 준비될 때까지 기다려 주세요.</p>
+    <button class="btn-block" onclick="closeModal('receiptModal')">확인</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">알림 내용</div>
+
+<script>
+// 1. 샘플 데이터 설정
+const PATIENTS = [
+  { id: 'P001', name: '김민준', condition: 'normal', room: '301호' },
+  { id: 'P002', name: '이서연', condition: 'diabetes', room: '214호' }, // 당뇨: 단맛 제한
+  { id: 'P003', name: '박도현', condition: 'heart', room: '508호' }     // 심장질환: 커피 전면 금지
+];
+
+const MENU = [
+  { id: 1, cat: 'coffee', icon: '☕', name: '아메리카노', price: 3000, caffeine: true },
+  { id: 2, cat: 'coffee', icon: '☕', name: '카페라떼', price: 3500, caffeine: true },
+  { id: 3, cat: 'nonCoffee', icon: '🍫', name: '초코라떼', price: 4000, caffeine: false },
+  { id: 4, cat: 'nonCoffee', icon: '🍵', name: '말차라떼', price: 4000, caffeine: false },
+  { id: 5, cat: 'smoothie', icon: '🥤', name: '딸기스무디', price: 4500, caffeine: false }
+];
+
+const SUGAR_OPTS = ['달지 않음', '덜 달게', '보통', '매우 달게'];
+
+// 2. 글로벌 앱 상태 관리 변수
+let currentPatient = null;
+let cardBalance = 30000;
+let cart = [];
+let currentItem = null; // 현재 옵션창에 띄워진 아이템
+let selectedTemp = 'ICE';
+let selectedSugar = '보통';
+let currentCategory = 'all';
+
+// 3. 앱 구동 초기화 함수
+function init() {
+  const listDiv = document.getElementById('demoPatientList');
+  listDiv.innerHTML = PATIENTS.map(p => `
+    <div class="demo-item" onclick="quickSelectPatient('${p.id}')">
+      <span>${p.name} (${p.room})</span>
+      <strong>${p.condition === 'diabetes' ? '당뇨' : p.condition === 'heart' ? '심장' : '일반'}</strong>
+    </div>
+  `).join('');
+}
+
+function quickSelectPatient(id) {
+  document.getElementById('patientIdInput').value = id;
+  doAuth();
+}
+
+function selectMethod(method, btn) {
+  document.querySelectorAll('.auth-method-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// 4. 환자 인증 프로세스
+function doAuth() {
+  const idInput = document.getElementById('patientIdInput').value.trim().toUpperCase();
+  const found = PATIENTS.find(p => p.id === idInput);
+
+  if (!found) {
+    alert('존재하지 않는 환자 번호입니다.');
+    return;
+  }
+
+  currentPatient = found;
+  cardBalance = 30000; // 테스트용 초기 잔액 세팅
+  cart = [];
+
+  // 화면 전환 조작
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('appScreen').classList.add('visible');
+
+  // 상단 환자 바인딩 정보 표시
+  document.getElementById('patientBadge').innerHTML = `${currentPatient.name} (${currentPatient.room})`;
+  
+  // 조건별 주의사항 상단 배너 표시 제어
+  const banner = document.getElementById('healthBanner');
+  if (currentPatient.condition === 'diabetes') {
+    banner.innerHTML = '⚠️ <strong>당뇨 주의 환자:</strong> 고당도(매우 달게) 옵션 선택이 제한됩니다.';
+    banner.className = 'health-banner show';
+  } else if (currentPatient.condition === 'heart') {
+    banner.innerHTML = '❌ <strong>심장 질환 환자:</strong> 카페인이 포함된 커피 메뉴 주문이 전면 제한됩니다.';
+    banner.className = 'health-banner show';
+  } else {
+    banner.className = 'health-banner';
+  }
+
+  renderAll();
+}
+
+function logout() {
+  currentPatient = null;
+  document.getElementById('appScreen').classList.remove('visible');
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('patientIdInput').value = '';
+}
+
+// 5. 메뉴 및 주문 내역 데이터 렌더링 화면 출력
+function renderMenu() {
+  const grid = document.getElementById('menuGrid');
+  // 카테고리 필터링 필터 분기
+  const filtered = currentCategory === 'all' ? MENU : MENU.filter(m => m.cat === currentCategory);
+
+  grid.innerHTML = filtered.map(item => {
+    let isRestricted = false;
+    let tagHtml = '';
+
+    // 환자 질환 조건별 음료 차단 체크 로직
+    if (currentPatient && currentPatient.condition === 'heart' && item.caffeine) {
+      isRestricted = true;
+      tagHtml = '<span class="status-tag">제한</span>';
+    }
+
+    return `
+      <div class="menu-card ${isRestricted ? 'restricted' : ''}" onclick="openOptionModal(${item.id})">
+        ${tagHtml}
+        <div style="font-size:30px;">${item.icon}</div>
+        <div style="font-weight:bold; font-size:14px; margin:5px 0;">${item.name}</div>
+        <div style="color:var(--accent); font-size:13px;">₩${item.price.toLocaleString()}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCart() {
+  const itemsDiv = document.getElementById('orderItems');
+  if (cart.length === 0) {
+    itemsDiv.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:30px 0;">비어있음</div>';
+    document.getElementById('orderTotal').textContent = '₩0';
+    return;
+  }
+
+  itemsDiv.innerHTML = cart.map((item, index) => `
+    <div class="order-item">
+      <div>
+        <div><strong>${item.menu.name}</strong></div>
+        <div style="font-size:11px; color:var(--text-muted);">${item.temp} / ${item.sugar}</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span>₩${(item.menu.price * item.qty).toLocaleString()}</span>
+        <div>
+          <button class="qty-btn" onclick="changeQty(${index}, -1)">-</button>
+          <span style="display:inline-block; width:15px; text-align:center;">${item.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${index}, 1)">+</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // 합계 계산 처리
+  const total = cart.reduce((sum, item) => sum + (item.menu.price * item.qty), 0);
+  document.getElementById('orderTotal').textContent = `₩${total.toLocaleString()}`;
+  
+  // 잔액 부족 시 주문 결제버튼 비활성화 제어
+  document.getElementById('btnPay').disabled = total > cardBalance;
+}
+
+function renderAll() {
+  document.getElementById('cardBalance').textContent = `₩${cardBalance.toLocaleString()}`;
+  renderMenu();
+  renderCart();
+}
+
+function filterCategory(cat, btn) {
+  currentCategory = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMenu();
+}
+
+// 6. 음료 옵션 선택 팝업 모달 제어 함수
+function openOptionModal(id) {
+  currentItem = MENU.find(m => m.id === id);
+  selectedTemp = 'ICE';
+  selectedSugar = '보통';
+
+  document.getElementById('optModalName').textContent = currentItem.name;
+  document.getElementById('optModalPrice').textContent = `가격: ₩${currentItem.price.toLocaleString()}`;
+
+  // 당뇨환자 경고라벨 노출 여부
+  const sugarWarn = document.getElementById('sugarWarnBox');
+  sugarWarn.style.display = (currentPatient.condition === 'diabetes' && currentItem.caffeine) ? 'block' : 'none';
+
+  // 핫 / 아이스 토글 버튼 생성
+  document.getElementById('optTemp').innerHTML = ['ICE', 'HOT'].map(t => `
+    <div class="opt-chip ${t === selectedTemp ? 'selected' : ''}" onclick="pickOption('temp', '${t}', this)">${t}</div>
+  `).join('');
+
+  // 당도 옵션 조립 및 제어 (당뇨 환자는 '매우 달게' 차단 조치)
+  document.getElementById('optSugar').innerHTML = SUGAR_OPTS.map(s => {
+    const isRestrictedSugar = (currentPatient.condition === 'diabetes' && s === '매우 달게');
+    return `
+      <div class="opt-chip ${s === selectedSugar ? 'selected' : ''} ${isRestrictedSugar ? 'disabled-opt' : ''}" 
+           onclick="${isRestrictedSugar ? '' : `pickOption('sugar', '${s}', this)`}">
+        ${s} ${isRestrictedSugar ? '🚫' : ''}
+      </div>
+    `;
+  }).join('');
+
+  openModal('optionModal');
+}
+
+function pickOption(type, value, element) {
+  if (type === 'temp') selectedTemp = value;
+  if (type === 'sugar') selectedSugar = value;
+
+  // 선택 스타일 시각화 이동 피드백 반영
+  element.closest('.option-grid').querySelectorAll('.opt-chip').forEach(c => c.classList.remove('selected'));
+  element.classList.add('selected');
+}
+
+// 7. 장바구니 데이터 적재 및 수량 핸들링 조작
+function addToCart() {
+  const existing = cart.find(c => c.menu.id === currentItem.id && c.temp === selectedTemp && c.sugar === selectedSugar);
+  
+  if (existing) {
+    existing.qty++;
+  } else {
+    cart.push({ menu: currentItem, temp: selectedTemp, sugar: selectedSugar, qty: 1 });
+  }
+
+  closeModal('optionModal');
+  triggerToast(`${currentItem.name} 상품을 담았습니다.`);
+  renderAll();
+}
+
+function changeQty(index, offset) {
+  cart[index].qty += offset;
+  if (cart[index].qty <= 0) cart.splice(index, 1);
+  renderAll();
+}
+
+// 8. 카드 충전 및 결제 서브 흐름
+function openChargeModal() { openModal('chargeModal'); }
+function doCharge(amount) {
+  cardBalance += amount;
+  closeModal('chargeModal');
+  triggerToast(`${amount.toLocaleString()}원 충전이 완료되었습니다.`);
+  renderAll();
+}
+
+function openPayModal() {
+  if (cart.length === 0) return;
+  openModal('payModal');
+}
+
+function doPayment() {
+  const total = cart.reduce((sum, item) => sum + (item.menu.price * item.qty), 0);
+  cardBalance -= total;
+  cart = []; // 카트 비우기
+  
+  closeModal('payModal');
+  openModal('receiptModal');
+  renderAll();
+}
+
+// 9. 다용도 UI 유틸리티 기능 함수들
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function triggerToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.style.display = 'none', 2000);
+}
+
+// 최초 화면 로드 실행부
+init();
+</script>
+</body>
+</html>
