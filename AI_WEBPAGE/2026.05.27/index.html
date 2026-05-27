@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        let n = Math.random() * 100;
+        //Math.random() = 0~1 사이 숫자 랜덤 발생.
+        //floor = 소수점 버리기.
+        //ceil = 그냥 1 올림.
+
+        document.write(n + "<br>");
+        document.write(Math.floor(n) + "<br>");
+        document.write(Math.ceil(n) + "<br>");
+        document.write(Math.PI + "<br>");
+
+
+        let myArray1 = new Array();
+        myArray1[0] = "apple";
+        myArray1[1] = "banana";
+        myArray1[2] = "orange";
+        const myArray2 = ["apple", "banana", "orange"];
+
+        let myArray3 = new Array("apple", "banana", "orange");
+        let myArray4 = ["apple", "banana", "orange"];
+
+        for(let i = 0; i < myArray1.length; i++){
+            document.write(myArray1[i] + "<br>");
+        }
+
+        for(let i = 0; i < myArray2.length; i++){
+            document.write(myArray2[i] + "<br>");
+        }
+
+        for(let i = 0; i < myArray3.length; i++){
+            document.write(myArray3[i] + "<br>");
+        }
+
+        let admin = ["Kim", "Lee", "Park"];
+
+        for(let i = 0; i < admin.length; i++){
+            
+            let person = prompt("아이디를 입력하시오 : ");
+
+            if(person == admin[i]) {alert("로그인 되었습니다."); break;}
+            else {alert("존재하지 않는 아이디입니다.");}
+        }
+
+        let x = [1, 2, 3];
+        let y = [4, 5, 6];
+        let joined = x.concat(y);
+
+        for(let i = 0; i < joined.length; i++){
+            document.write(joined[i] + "<br>");
+        }
+        document.write(x.indexOf(2));
+
+    </script>
+</body>
+</html>
