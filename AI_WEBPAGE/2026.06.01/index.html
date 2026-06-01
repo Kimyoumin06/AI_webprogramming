@@ -49,8 +49,24 @@
         document.write(yw.slice(2, 6) + "<br>"); // 프리미어 프로 단축키 'Q'
     </script>
 
+    <h2>2-Array</h2>
     <script>
         let v = [[10, 20, 30], [40, 50, 60], [70, 80, 90], [100, 110, 120]];
+        document.write(v[2][1] + "<br>");
+        v[2][1] = 8000;
+        document.write(v[2][1] + "<br>");
+    </script>
+
+    <h2>for in loop</h2>
+    <script>
+        let myCar = {make: "BMW", model: "X5", year: 2026};
+        for(let c in myCar){
+            document.write(myCar[c] + "   ");
+        }
+        document.write("<br>");
+        for(let i=0; i < myCar.length; i++){
+            document.write(myCar[i] + "   ");
+        }
     </script>
 </body>
 </html>
